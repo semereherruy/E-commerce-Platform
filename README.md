@@ -331,21 +331,6 @@ pipenv run pytest --cov=store --cov=core --cov=analytics
 
 This project is licensed under the MIT License.
 
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-## 📞 Support
-
-For questions or issues:
-- Create an issue in the GitHub repository
-- Check the documentation for common solutions
-- Review the TypeScript types for API contracts
-
 ---
 
 **Stack:** Django REST Framework, Next.js (App Router), TypeScript, Tailwind CSS
