@@ -1,17 +1,16 @@
-import os
 from .common import *
 
 DEBUG = False
 
-SECRET_KEY = os.environ['SECRET_KEY']
+SECRET_KEY = env('SECRET_KEY')
 
-ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '*').split(',')
+# Strictly define ALLOWED_HOSTS from environment variables
+ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=[])
 
-import dj_database_url
 DATABASES = {
-    'default': dj_database_url.config(
-        default=os.environ.get('DATABASE_URL'),
-        conn_max_age=600,
-        conn_health_checks=True,
-    )
+    'default': env.db('DATABASE_URL')
 }
+
+# Ensure connection pooling is active
+DATABASES['default']['CONN_MAX_AGE'] = 600
+DATABASES['default']['CONN_HEALTH_CHECKS'] = True

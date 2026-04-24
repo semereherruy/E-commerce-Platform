@@ -4,17 +4,44 @@
 {% block content %}
 <div class="analytics-dashboard">
     <h1>Project Progress & Business Analytics</h1>
+    <div style="margin-bottom: 20px;">
+        <a href="{% url 'analytics_report' %}" class="download-btn">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 8px;">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="7 10 12 15 17 10"></polyline>
+                <line x1="12" y1="15" x2="12" y2="3"></line>
+            </svg>
+            Download Report
+        </a>
+    </div>
     <div class="last-updated">Last Updated: <span id="last-updated-time">Just now</span></div>
 
     <!-- Summary Cards -->
     <div class="summary-cards">
         <div class="card">
-            <h3>Total Revenue</h3>
-            <p id="total-revenue" class="highlight">Loading...</p>
+            <div class="card-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="12" y1="1" x2="12" y2="23"></line>
+                    <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                </svg>
+            </div>
+            <div class="card-content">
+                <h3>Total Revenue</h3>
+                <p id="total-revenue" class="highlight">Loading...</p>
+            </div>
         </div>
         <div class="card">
-            <h3>Total Orders</h3>
-            <p id="total-orders" class="highlight">Loading...</p>
+            <div class="card-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="9" cy="21" r="1"></circle>
+                    <circle cx="20" cy="21" r="1"></circle>
+                    <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+                </svg>
+            </div>
+            <div class="card-content">
+                <h3>Total Orders</h3>
+                <p id="total-orders" class="highlight">Loading...</p>
+            </div>
         </div>
     </div>
 
@@ -27,6 +54,18 @@
         <div class="chart-wrapper">
             <h2>Sales by Collection</h2>
             <canvas id="collectionChart"></canvas>
+        </div>
+        <div class="chart-wrapper">
+            <h2>Top Selling Products (Units)</h2>
+            <canvas id="productsChart"></canvas>
+        </div>
+        <div class="chart-wrapper">
+            <h2>Customer Membership</h2>
+            <canvas id="membershipChart"></canvas>
+        </div>
+        <div class="chart-wrapper">
+            <h2>Order Value Distribution</h2>
+            <canvas id="orderDistChart"></canvas>
         </div>
     </div>
 </div>
@@ -49,21 +88,38 @@
         border-radius: 8px;
         box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         flex: 1;
-        text-align: center;
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+
+    .card-icon {
+        background: #f0f7fa;
+        color: #417690;
+        padding: 12px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .card-content {
+        text-align: left;
     }
 
     .card h3 {
-        margin-top: 0;
+        margin: 0;
         color: #666;
-        font-size: 0.9rem;
+        font-size: 0.85rem;
         text-transform: uppercase;
+        letter-spacing: 0.5px;
     }
 
     .card .highlight {
-        font-size: 2rem;
+        font-size: 1.8rem;
         font-weight: bold;
         color: #2c3e50;
-        margin: 10px 0 0;
+        margin: 5px 0 0;
     }
 
     .charts-container {
@@ -87,6 +143,25 @@
         color: #888;
         margin-bottom: 10px;
     }
+
+    .download-btn {
+        background-color: #417690;
+        color: white;
+        padding: 10px 20px;
+        text-decoration: none;
+        border-radius: 5px;
+        font-weight: bold;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+    }
+
+    .download-btn:hover {
+        background-color: #2d5061;
+        color: white;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        transform: translateY(-1px);
+    }
 </style>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -94,6 +169,9 @@
     document.addEventListener('DOMContentLoaded', function () {
         const salesCtx = document.getElementById('salesChart').getContext('2d');
         const collectionCtx = document.getElementById('collectionChart').getContext('2d');
+        const productsCtx = document.getElementById('productsChart').getContext('2d');
+        const membershipCtx = document.getElementById('membershipChart').getContext('2d');
+        const orderDistCtx = document.getElementById('orderDistChart').getContext('2d');
 
         // Initialize Charts
         let salesChart = new Chart(salesCtx, {
@@ -126,6 +204,52 @@
             options: { responsive: true }
         });
 
+        let productsChart = new Chart(productsCtx, {
+            type: 'bar',
+            data: {
+                labels: [],
+                datasets: [{
+                    label: 'Units Sold',
+                    data: [],
+                    backgroundColor: '#1abc9c'
+                }]
+            },
+            options: { 
+                responsive: true,
+                indexAxis: 'y' // Horizontal bar chart
+            }
+        });
+
+        let membershipChart = new Chart(membershipCtx, {
+            type: 'pie',
+            data: {
+                labels: [],
+                datasets: [{
+                    data: [],
+                    backgroundColor: ['#cd7f32', '#c0c0c0', '#ffd700'] // Bronze, Silver, Gold colors
+                }]
+            },
+            options: { responsive: true }
+        });
+
+        let orderDistChart = new Chart(orderDistCtx, {
+            type: 'bar',
+            data: {
+                labels: [],
+                datasets: [{
+                    label: 'Number of Orders',
+                    data: [],
+                    backgroundColor: '#9b59b6'
+                }]
+            },
+            options: { 
+                responsive: true,
+                scales: {
+                    y: { beginAtZero: true }
+                }
+            }
+        });
+
         async function updateDashboard() {
             try {
                 const response = await fetch('{% url "analytics_data" %}');
@@ -148,6 +272,21 @@
                 collectionChart.data.labels = data.pie_data.labels;
                 collectionChart.data.datasets[0].data = data.pie_data.values;
                 collectionChart.update();
+
+                // Update Products Chart
+                productsChart.data.labels = data.top_products.labels;
+                productsChart.data.datasets[0].data = data.top_products.values;
+                productsChart.update();
+
+                // Update Membership Chart
+                membershipChart.data.labels = data.membership_dist.labels;
+                membershipChart.data.datasets[0].data = data.membership_dist.values;
+                membershipChart.update();
+
+                // Update Order Distribution Chart
+                orderDistChart.data.labels = data.order_distribution.labels;
+                orderDistChart.data.datasets[0].data = data.order_distribution.values;
+                orderDistChart.update();
 
             } catch (error) {
                 console.error('Error fetching analytics data:', error);

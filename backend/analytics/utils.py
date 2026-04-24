@@ -24,15 +24,24 @@ def analyze_sales(df):
     return daily_sales, moving_avg
 
 
-def plot_sales(daily_sales, moving_avg):
+def plot_sales(daily_sales, moving_avg, as_base64=True):
     plt.figure(figsize=(10,5))
     plt.plot(daily_sales.index, daily_sales.values, label="Daily Sales")
     plt.plot(moving_avg.index, moving_avg.values, linestyle="--", label="7-day Average")
+    plt.title("Sales Trend & 7-Day Moving Average")
+    plt.xlabel("Date")
+    plt.ylabel("Revenue ($)")
     plt.legend()
+    plt.grid(True, linestyle=':', alpha=0.6)
 
     buf = io.BytesIO()
-    plt.savefig(buf, format="png")
+    plt.savefig(buf, format="png", dpi=300) # Higher DPI for reports
     buf.seek(0)
-    chart = base64.b64encode(buf.read()).decode("utf-8")
+    
+    if as_base64:
+        chart = base64.b64encode(buf.read()).decode("utf-8")
+        plt.close()
+        return f"data:image/png;base64,{chart}"
+    
     plt.close()
-    return f"data:image/png;base64,{chart}"
+    return buf.getvalue()

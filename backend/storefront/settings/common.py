@@ -2,10 +2,18 @@ import environ
 import os
 from pathlib import Path
 from datetime import timedelta
-from decouple import config
 from celery.schedules import crontab
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
+
+# Initialize environment variables
+env = environ.Env(
+    # set casting, default value
+    DEBUG=(bool, False)
+)
+
+# Reading .env file
+environ.Env.read_env(os.path.join(BASE_DIR, '.env'))
 
 
 # Application definition
@@ -47,8 +55,8 @@ MIDDLEWARE = [
     
 ]
 
-'''if DEBUG:
-    MIDDLEWARE += ['silk.middleware.SilkyMiddleware']'''
+if env('DEBUG'):
+    MIDDLEWARE += ['silk.middleware.SilkyMiddleware']
     
     
 INTERNAL_IPS = [
@@ -172,16 +180,16 @@ DJOSER ={
 AUTH_USER_MODEL= 'core.User'
 
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = os.environ.get('EMAIL_HOST', 'localhost')
-EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
-EMAIL_HOST_USER = ''
-EMAIL_PORT = 2525
-DEFAULT_FROM_EMAIL = 'matyos@gmail.com'
+EMAIL_HOST = env('EMAIL_HOST', default='localhost')
+EMAIL_HOST_PASSWORD = env('EMAIL_HOST_PASSWORD', default='')
+EMAIL_HOST_USER = env('EMAIL_HOST_USER', default='')
+EMAIL_PORT = env.int('EMAIL_PORT', default=2525)
+DEFAULT_FROM_EMAIL = env('DEFAULT_FROM_EMAIL', default='admin@ecommerce.com')
 
 ADMINS = [
-    ('matyos', 'admin@gmail.com')
+    (env('ADMIN_NAME', default='Admin'), env('ADMIN_EMAIL', default='admin@ecommerce.com'))
 ]
-CELERY_BROKER_URL = os.environ.get('CELERY_BROKER_URL', 'redis://localhost:6379/1')
+CELERY_BROKER_URL = env('CELERY_BROKER_URL', default='redis://localhost:6379/1')
 CELERY_BEAT_SCHEDULE = {
     'notify_customers':{
         'task':'playground.tasks.notify_customers',
@@ -194,7 +202,7 @@ CELERY_BEAT_SCHEDULE = {
 CACHES = {
     "default": {
         "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": os.environ.get('REDIS_URL', 'redis://127.0.0.1:6379/2'),
+        "LOCATION": env('REDIS_URL', default='redis://127.0.0.1:6379/2'),
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
         }
@@ -219,7 +227,7 @@ LOGGING = {
     'loggers':{
         '':{
             'handlers':['console','file'],
-            'level':os.environ.get('DJANGO_LOG_LEVEL', 'INFO')
+            'level': env('DJANGO_LOG_LEVEL', default='INFO')
         }
     },
     'formatters':{

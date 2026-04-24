@@ -56,16 +56,9 @@ class ProductImageInline(admin.TabularInline):
     
     def thumbnail(self, instance):
         if instance.image.name != '':
-            return format_html(f'<img src="{instance.image.url}" class="thumbnail"/>')
+            return format_html('<img src="{}" class="thumbnail"/>', instance.image.url)
         return ''
 
-
-'''class LikedItemInline(GenericTabularInline):
-    model = LikedItem
-    ct_field = "content_type"
-    ct_fk_field = "object_id"
-    extra = 0
-    readonly_fields = ("user", "created_at")'''
 
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
@@ -82,7 +75,7 @@ class ProductAdmin(admin.ModelAdmin):
     list_editable = ['price']
     list_per_page = 10
     list_select_related = ['collection']
-    #inlines = [ProductImageInline]
+    inlines = [ProductImageInline]
 
     fieldsets = (
         (None, {'fields': ('title', 'slug', 'description', 'collection', 'promotions')}),
