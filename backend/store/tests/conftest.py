@@ -15,12 +15,15 @@ def authenticate(api_client):
         authenticate()              -> normal user
         authenticate(is_staff=True) -> staff user
     """
-    def do_authenticate(is_staff=False):
+    def do_authenticate(is_staff=False, username="testuser", email=None):
         User = get_user_model()
-        user = User(username="testuser")
-        user.set_password("pass123")
-        user.is_staff = bool(is_staff)
-        user.save()  # <-- important
+        if email is None:
+            email = f"{username}@example.com"
+        user, created = User.objects.get_or_create(username=username, defaults={'email': email})
+        if created:
+            user.set_password("pass123")
+            user.is_staff = bool(is_staff)
+            user.save()
         api_client.force_authenticate(user=user)
         return user
     return do_authenticate

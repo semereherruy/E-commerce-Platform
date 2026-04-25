@@ -34,7 +34,6 @@ djoser = "*"
 [dev-packages]
 pytest-django = "*"
 pytest-watch = "*"
-model-bakery = "*"
 pytest = "*"
 locust = "*"
 

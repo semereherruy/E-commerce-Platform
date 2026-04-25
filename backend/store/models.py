@@ -180,6 +180,7 @@ class Payment(models.Model):
 
     # amount you expect the payment gateway to receive (mirror of order total)
     amount = models.DecimalField(max_digits=10, decimal_places=2)
+    transaction_id = models.CharField(max_length=255, null=True, blank=True)
 
     # small enum for status
     STATUS_PENDING = 'P'
