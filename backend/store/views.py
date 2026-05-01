@@ -4,7 +4,7 @@ from django.views.decorators.cache import cache_page
 from django.shortcuts import render, get_object_or_404, redirect
 from django.db.models import Exists, OuterRef
 from django.conf import settings
-from django.db.models.aggregates import Count
+from django.db.models.aggregates import Count, Avg
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import SearchFilter,OrderingFilter
 from rest_framework.decorators import action, permission_classes, api_view
@@ -110,7 +110,11 @@ class ProductViewSet(ModelViewSet):
             Product.objects
             .select_related("collection")
             .prefetch_related("images", "promotions")
-            .annotate(total_likes=Count("likes", distinct=True))
+            .annotate(
+                total_likes=Count("likes", distinct=True),
+                reviews_count=Count("reviews", distinct=True),
+                average_rating=Avg("reviews__rating")
+            )
             .order_by("title")
         )
         if user:

@@ -148,13 +148,15 @@ function ProductFormModal({
 }: {
   initial?: ProductForm & { id?: number; images?: { id: number; image: string }[] };
   collections: Collection[];
-  onSave: (data: ProductForm, id?: number) => Promise<void>;
+  onSave: (data: ProductForm, id?: number, imageFile?: File | null) => Promise<void>;
   onClose: () => void;
   loading: boolean;
   onImageChange: () => void;
 }) {
   const [form, setForm] = useState<ProductForm>(initial ? { ...EMPTY_FORM, ...initial } : { ...EMPTY_FORM });
   const [productImages, setProductImages] = useState(initial?.images ?? []);
+  const [stagedImage, setStagedImage] = useState<File | null>(null);
+  const stagedFileRef = useRef<HTMLInputElement>(null);
 
   const refreshImages = async () => {
     if (!initial?.id) return;
@@ -249,24 +251,50 @@ function ProductFormModal({
         </div>
       </div>
 
-      {/* Image upload — only for existing products */}
-      {initial?.id && (
+      {/* Image upload — for existing products */}
+      {initial?.id ? (
         <ImageUploadPanel
           productId={initial.id}
           images={productImages}
           onUploaded={refreshImages}
         />
-      )}
-      {!initial?.id && (
-        <p className="text-xs text-muted-foreground font-medium border-t pt-4">
-          💡 You can upload images after the product is created.
-        </p>
+      ) : (
+        <div className="space-y-4 border-t pt-6 mt-2">
+          <Label className="font-bold uppercase text-xs tracking-widest text-primary flex items-center gap-2">
+            <ImageIcon className="h-3 w-3" /> Initial Product Image (Optional)
+          </Label>
+          <div className="flex items-center gap-4">
+             <input
+              ref={stagedFileRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => setStagedImage(e.target.files?.[0] || null)}
+            />
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => stagedFileRef.current?.click()}
+              className="h-12 rounded-2xl border-2 border-dashed font-bold gap-2 hover:border-primary hover:text-primary transition-colors flex-grow"
+            >
+              {stagedImage ? <><ImageIcon className="h-4 w-4" /> {stagedImage.name}</> : <><Upload className="h-4 w-4" /> Select Main Image</>}
+            </Button>
+            {stagedImage && (
+              <Button variant="ghost" size="icon" onClick={() => setStagedImage(null)} className="h-12 w-12 rounded-xl text-destructive">
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
+          <p className="text-[10px] text-muted-foreground font-medium ml-1">
+             💡 You can add more images after the product is created.
+          </p>
+        </div>
       )}
 
       <div className="flex gap-3 pt-4">
         <Button variant="outline" onClick={onClose} className="h-12 rounded-2xl border-2 font-bold px-8">Cancel</Button>
         <Button
-          onClick={() => onSave(form, initial?.id)}
+          onClick={() => onSave(form, initial?.id, stagedImage)}
           disabled={loading || !form.title || !form.price || !form.inventory}
           className="h-12 rounded-2xl font-black px-8 shadow-lg"
         >
@@ -312,7 +340,7 @@ export default function AdminProductsPage() {
 
   useEffect(() => { if (user?.role === 'admin') load(); }, [user, load]);
 
-  const handleSave = async (form: ProductForm, id?: number) => {
+  const handleSave = async (form: ProductForm, id?: number, imageFile?: File | null) => {
     setSaving(true);
     try {
       const payload: Record<string, unknown> = {
@@ -333,8 +361,24 @@ export default function AdminProductsPage() {
         await api.patch(`/store/products/${id}/`, payload);
         toast.success('Product updated.');
       } else {
-        await api.post('/store/products/', payload);
-        toast.success('Product created. Open Edit to add images.');
+        const res = await api.post('/store/products/', payload);
+        const newProduct = res.data;
+        
+        // Auto-upload staged image if exists
+        if (imageFile) {
+          try {
+            const formData = new FormData();
+            formData.append('image', imageFile);
+            await api.post(`/store/products/${newProduct.id}/images/`, formData, {
+              headers: { 'Content-Type': 'multipart/form-data' },
+            });
+            toast.success('Product created with image!');
+          } catch (imgErr) {
+            toast.error('Product created, but image upload failed.');
+          }
+        } else {
+          toast.success('Product created successfully.');
+        }
       }
       setModal(null);
       load();

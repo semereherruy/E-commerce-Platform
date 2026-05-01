@@ -11,37 +11,19 @@ function Sheet({ ...props }: SheetPrimitive.Root.Props) {
   return <SheetPrimitive.Root data-slot="sheet" {...props} />
 }
 
-function SheetTrigger({ nativeButton, ...props }: SheetPrimitive.Trigger.Props) {
+function SheetTrigger({ ...props }: SheetPrimitive.Trigger.Props) {
   return (
     <SheetPrimitive.Trigger
       data-slot="sheet-trigger"
-      nativeButton={
-        nativeButton ??
-        (props.render
-          ? React.isValidElement(props.render) &&
-            (props.render.type === "button" ||
-              (props.render.type as any)?.isButton === true ||
-              (props.render.props as any)?.["data-slot"] === "button")
-          : true)
-      }
       {...props}
     />
   )
 }
 
-function SheetClose({ nativeButton, ...props }: SheetPrimitive.Close.Props) {
+function SheetClose({ ...props }: SheetPrimitive.Close.Props) {
   return (
     <SheetPrimitive.Close
       data-slot="sheet-close"
-      nativeButton={
-        nativeButton ??
-        (props.render
-          ? React.isValidElement(props.render) &&
-            (props.render.type === "button" ||
-              (props.render.type as any)?.isButton === true ||
-              (props.render.props as any)?.["data-slot"] === "button")
-          : true)
-      }
       {...props}
     />
   )

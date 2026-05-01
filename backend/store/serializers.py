@@ -40,6 +40,8 @@ class ProductSerializer(serializers.ModelSerializer):
     images = ProductImageSerializer(many=True, read_only=True)
 
     total_likes = serializers.IntegerField(read_only=True)
+    average_rating = serializers.FloatField(read_only=True)
+    reviews_count = serializers.IntegerField(read_only=True)
     is_liked = serializers.SerializerMethodField()
 
     # Discount-related fields
@@ -51,21 +53,32 @@ class ProductSerializer(serializers.ModelSerializer):
     discount_label = serializers.SerializerMethodField()
 
     # Price fields
-    unit_price = serializers.DecimalField(max_digits=6, decimal_places=2, source="price")
+    price = serializers.DecimalField(max_digits=6, decimal_places=2, required=False)
+    unit_price = serializers.DecimalField(max_digits=6, decimal_places=2, source="price", required=False)
     price_with_tax = serializers.SerializerMethodField()
 
     class Meta:
         model = Product
         fields = [
-            "id", "title", "slug", "description", "inventory",
+            "id", "title", "slug", "description", "inventory", "price",
             "unit_price", "price_with_tax", "collection", "images",
             "total_likes", "is_liked",
+            "average_rating", "reviews_count",
             "is_on_sale", "discount_type", "discount_value",
             "discount_active", "discounted_price", "discount_label",
         ]
         extra_kwargs = {
             "collection": {"required": False, "allow_null": True},
+            "slug": {"required": False},
         }
+
+    def validate(self, data):
+        # Ensure at least one of price or unit_price is provided on create
+        if not self.instance:
+            if 'price' not in data and 'price' not in self.initial_data and \
+               'unit_price' not in data and 'unit_price' not in self.initial_data:
+                raise serializers.ValidationError({"price": "This field is required."})
+        return data
 
     # -------------------- LIKE SYSTEM --------------------
     def get_is_liked(self, obj):
@@ -116,7 +129,7 @@ class ProductSerializer(serializers.ModelSerializer):
 class ReviewSerializer(serializers.ModelSerializer):
     class Meta:
         model = Review
-        fields = ['id','date','name','description']
+        fields = ['id','date','name','description', 'rating']
         read_only_fields = ['name']
         
     def create(self, validated_data):

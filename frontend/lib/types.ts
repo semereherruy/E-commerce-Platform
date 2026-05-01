@@ -33,6 +33,8 @@ export interface Product {
   images: ProductImage[];
   total_likes: number;
   is_liked: boolean;
+  average_rating: number;
+  reviews_count: number;
   is_on_sale: boolean;
   discount_type?: 'percent' | 'fixed' | null;
   discount_value?: number | null;
@@ -46,6 +48,7 @@ export interface Review {
   data: string;
   name: string;
   description: string;
+  rating: number;
 }
 
 export interface CartItem {

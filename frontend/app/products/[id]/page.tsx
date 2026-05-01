@@ -15,6 +15,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
 import { toast } from 'sonner';
 import { api } from '@/lib/api-client';
+import StarRating from '@/components/products/StarRating';
 import { useCartActions } from '@/hooks/use-cart-actions';
 
 import { extractList, getApiErrorMessage } from '@/lib/api-helpers';
@@ -36,7 +37,10 @@ export default function ProductDetailPage() {
   const [showReviewForm, setShowReviewForm] = useState(false);
   const [reviewName, setReviewName] = useState('');
   const [reviewText, setReviewText] = useState('');
+  const [reviewRating, setReviewRating] = useState(5);
   const [submittingReview, setSubmittingReview] = useState(false);
+  const [isLiked, setIsLiked] = useState(false);
+  const [isLikeLoading, setIsLikeLoading] = useState(false);
   const reviewFormRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -46,6 +50,7 @@ export default function ProductDetailPage() {
       try {
         const productRes = await api.get(`/store/products/${id}/`);
         setProduct(productRes.data);
+        setIsLiked(productRes.data.is_liked);
 
         const reviewsRes = await api.get(`/store/products/${id}/reviews/`);
         setReviews(extractList(reviewsRes.data));
@@ -67,6 +72,50 @@ export default function ProductDetailPage() {
     await addToCart(product, quantity);
   };
 
+  const handleLikeToggle = async () => {
+    if (!product || isLikeLoading) return;
+    
+    // Optimistic update
+    setIsLiked(!isLiked);
+    setIsLikeLoading(true);
+    
+    try {
+      const response = await api.post(`/store/products/${product.id}/likes/`);
+      setIsLiked(response.data.liked);
+    } catch (error: any) {
+      // Revert on error
+      setIsLiked(!isLiked);
+      if (error.response?.status === 401) {
+        toast.error('Please log in to like products');
+      } else {
+        toast.error('Failed to update like status');
+      }
+    } finally {
+      setIsLikeLoading(false);
+    }
+  };
+
+  const handleShare = async () => {
+    if (!product) return;
+    
+    const shareData = {
+      title: product.title,
+      text: product.description,
+      url: window.location.href,
+    };
+
+    try {
+      if (navigator.share) {
+        await navigator.share(shareData);
+      } else {
+        await navigator.clipboard.writeText(window.location.href);
+        toast.success('Link copied to clipboard!');
+      }
+    } catch (err) {
+      // Handle cancellation or other errors
+    }
+  };
+
 
   const handleSubmitReview = async () => {
     if (!reviewName.trim()) { toast.error('Please enter your name.'); return; }
@@ -76,10 +125,12 @@ export default function ProductDetailPage() {
       const res = await api.post(`/store/products/${id}/reviews/`, {
         name: reviewName.trim(),
         description: reviewText.trim(),
+        rating: reviewRating,
       });
       setReviews(prev => [res.data, ...prev]);
       setReviewName('');
       setReviewText('');
+      setReviewRating(5);
       setShowReviewForm(false);
       toast.success('Review submitted! Thank you.');
     } catch (err) {
@@ -153,9 +204,9 @@ export default function ProductDetailPage() {
               </h1>
               <div className="flex items-center gap-4">
                 <div className="flex items-center gap-1">
-                  <Star className={`h-4 w-4 ${reviews.length > 0 ? 'fill-primary text-primary' : 'text-muted'}`} />
+                  <StarRating rating={product.average_rating || 0} size={4} starClassName="fill-primary text-primary" />
                   <span className="text-sm font-bold ml-2">
-                    {reviews.length > 0 ? `Rating based on ${reviews.length} review${reviews.length !== 1 ? 's' : ''}` : 'No reviews yet'}
+                    {product.reviews_count > 0 ? `${product.average_rating.toFixed(1)} (${product.reviews_count} review${product.reviews_count !== 1 ? 's' : ''})` : 'No reviews yet'}
                   </span>
                 </div>
 
@@ -211,10 +262,21 @@ export default function ProductDetailPage() {
                   ADD TO CART
                 </Button>
                 
-                <Button variant="outline" size="icon" className="h-14 w-14 rounded-2xl border-2">
-                  <Heart className="h-6 w-6" />
+                <Button 
+                  variant="outline" 
+                  size="icon" 
+                  onClick={handleLikeToggle}
+                  disabled={isLikeLoading}
+                  className={`h-14 w-14 rounded-2xl border-2 transition-all active:scale-95 ${isLiked ? 'border-destructive/20 bg-destructive/5' : ''}`}
+                >
+                  <Heart className={`h-6 w-6 transition-colors ${isLiked ? 'fill-destructive text-destructive' : ''}`} />
                 </Button>
-                <Button variant="outline" size="icon" className="h-14 w-14 rounded-2xl border-2">
+                <Button 
+                  variant="outline" 
+                  size="icon" 
+                  onClick={handleShare}
+                  className="h-14 w-14 rounded-2xl border-2 transition-all active:scale-95 hover:bg-primary/5"
+                >
                   <Share2 className="h-5 w-5" />
                 </Button>
               </div>
@@ -306,6 +368,23 @@ export default function ProductDetailPage() {
                     />
                   </div>
                   <div className="space-y-2">
+                    <label className="text-xs font-black uppercase tracking-widest text-primary">Your Rating *</label>
+                    <div className="flex gap-2">
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <button
+                          key={star}
+                          type="button"
+                          onClick={() => setReviewRating(star)}
+                          className="focus:outline-none transition-transform active:scale-110"
+                        >
+                          <Star
+                            className={`h-8 w-8 ${star <= reviewRating ? 'fill-primary text-primary' : 'text-muted-foreground/20 hover:text-primary/40'}`}
+                          />
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="space-y-2">
                     <label className="text-xs font-black uppercase tracking-widest text-primary">Your Review *</label>
                     <textarea
                       value={reviewText}
@@ -345,9 +424,7 @@ export default function ProductDetailPage() {
                       <div>
                         <p className="font-black text-lg mb-1">{review.name}</p>
                         <div className="flex gap-1">
-                          {[...Array(5)].map((_, i) => (
-                            <Star key={i} className="h-3 w-3 fill-primary text-primary" />
-                          ))}
+                          <StarRating rating={review.rating || 5} size={3} starClassName="fill-primary text-primary" />
                         </div>
                       </div>
                     </div>

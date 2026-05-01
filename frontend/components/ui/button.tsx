@@ -45,21 +45,11 @@ function Button({
   className,
   variant = "default",
   size = "default",
-  nativeButton,
   ...props
 }: ButtonPrimitive.Props & VariantProps<typeof buttonVariants>) {
   return (
     <ButtonPrimitive
       data-slot="button"
-      nativeButton={
-        nativeButton ??
-        (props.render
-          ? React.isValidElement(props.render) &&
-            (props.render.type === "button" ||
-              (props.render.type as any)?.isButton === true ||
-              (props.render.props as any)?.["data-slot"] === "button")
-          : true)
-      }
       className={cn(buttonVariants({ variant, size, className }))}
       {...props}
     />

@@ -1,0 +1,93 @@
+{% extends "admin/base.html" %}
+
+{% block title %}{% if subtitle %}{{ subtitle }} | {% endif %}{{ title }} | {{ site_title|default:_('Django site admin') }}{% endblock %}
+
+{% block extrahead %}
+{{ block.super }}
+<style>
+    /* NEBI STORE Premium Theme: Gold, Black, White */
+    :root {
+        --primary: #d4af37 !important;           /* Golden */
+        --secondary: #000000 !important;         /* Black */
+        --accent: #d4af37 !important;
+        
+        --header-bg: #000000 !important;         /* True Black */
+        --header-color: #d4af37 !important;
+        --header-link-color: #ffffff !important;
+        
+        --breadcrumbs-bg: #ffffff !important;
+        --link-fg: #d4af37 !important;
+    }
+
+    /* Forced Overrides */
+    #header {
+        background: #000000 !important;
+        color: #d4af37 !important;
+        border-bottom: 3px solid #d4af37 !important;
+    }
+
+    #header a:link, #header a:visited {
+        color: #ffffff !important;
+    }
+
+    .module h2, .module caption, .inline-group h2 {
+        background: #000000 !important;
+        color: #d4af37 !important;
+    }
+
+    div.breadcrumbs {
+        background: #ffffff !important;
+        border-bottom: 1px solid #ddd !important;
+    }
+
+    div.breadcrumbs a {
+        color: #d4af37 !important;
+    }
+
+    .button, input[type=submit], input[type=button], .submit-row input, a.button {
+        background: #d4af37 !important;
+        color: #fff !important;
+    }
+
+    #branding h1 {
+        color: #d4af37 !important;
+        font-family: 'Inter', sans-serif;
+    }
+
+    /* Category headers in the main index */
+    .section h2, .section caption {
+        background: #000000 !important;
+        color: #d4af37 !important;
+    }
+
+    /* Sidebar headers */
+    #content-related h2 {
+        background: #000000 !important;
+        color: #d4af37 !important;
+    }
+
+    /* Analytics Dashboard Link in Header */
+    .header-link-dashboard {
+        background: var(--primary);
+        color: white !important;
+        padding: 5px 15px;
+        border-radius: 20px;
+        font-size: 11px;
+        font-weight: 900;
+        margin-left: 20px;
+        text-decoration: none;
+    }
+</style>
+{% endblock %}
+
+{% block branding %}
+<div id="branding">
+    <h1 id="site-name">
+        <a href="{% url 'admin:index' %}">
+            NEBI <span style="color: white; font-weight: 300;">STORE</span>
+        </a>
+    </h1>
+</div>
+{% endblock %}
+
+{% block nav-global %}{% endblock %}

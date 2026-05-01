@@ -14,19 +14,10 @@ function DropdownMenuPortal({ ...props }: MenuPrimitive.Portal.Props) {
   return <MenuPrimitive.Portal data-slot="dropdown-menu-portal" {...props} />
 }
 
-function DropdownMenuTrigger({ nativeButton, ...props }: MenuPrimitive.Trigger.Props) {
+function DropdownMenuTrigger({ ...props }: MenuPrimitive.Trigger.Props) {
   return (
     <MenuPrimitive.Trigger
       data-slot="dropdown-menu-trigger"
-      nativeButton={
-        nativeButton ??
-        (props.render
-          ? React.isValidElement(props.render) &&
-            (props.render.type === "button" ||
-              (props.render.type as any)?.isButton === true ||
-              (props.render.props as any)?.["data-slot"] === "button")
-          : true)
-      }
       {...props}
     />
   )
@@ -105,11 +96,8 @@ function DropdownMenuItem({
       nativeButton={
         nativeButton ??
         (props.render
-          ? React.isValidElement(props.render) &&
-            (props.render.type === "button" ||
-              (props.render.type as any)?.isButton === true ||
-              (props.render.props as any)?.["data-slot"] === "button")
-          : true)
+          ? React.isValidElement(props.render) && props.render.type === "button"
+          : false)
       }
       className={cn(
         "group/dropdown-menu-item relative flex cursor-default items-center gap-1.5 rounded-md px-1.5 py-1 text-sm outline-hidden select-none focus:bg-accent focus:text-accent-foreground not-data-[variant=destructive]:focus:**:text-accent-foreground data-inset:pl-7 data-[variant=destructive]:text-destructive data-[variant=destructive]:focus:bg-destructive/10 data-[variant=destructive]:focus:text-destructive dark:data-[variant=destructive]:focus:bg-destructive/20 data-disabled:pointer-events-none data-disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 data-[variant=destructive]:*:[svg]:text-destructive",
@@ -128,7 +116,6 @@ function DropdownMenuSubTrigger({
   className,
   inset,
   children,
-  nativeButton,
   ...props
 }: MenuPrimitive.SubmenuTrigger.Props & {
   inset?: boolean
@@ -137,15 +124,6 @@ function DropdownMenuSubTrigger({
     <MenuPrimitive.SubmenuTrigger
       data-slot="dropdown-menu-sub-trigger"
       data-inset={inset}
-      nativeButton={
-        nativeButton ??
-        (props.render
-          ? React.isValidElement(props.render) &&
-            (props.render.type === "button" ||
-              (props.render.type as any)?.isButton === true ||
-              (props.render.props as any)?.["data-slot"] === "button")
-          : true)
-      }
       className={cn(
         "flex cursor-default items-center gap-1.5 rounded-md px-1.5 py-1 text-sm outline-hidden select-none focus:bg-accent focus:text-accent-foreground not-data-[variant=destructive]:focus:**:text-accent-foreground data-inset:pl-7 data-popup-open:bg-accent data-popup-open:text-accent-foreground data-open:bg-accent data-open:text-accent-foreground [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
         className

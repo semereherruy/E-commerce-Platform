@@ -39,11 +39,8 @@ export default function LoginPage() {
         headers: { Authorization: `JWT ${access}` }
       });
       
-      setUser({
-        ...userRes.data,
-        role: userRes.data.is_staff ? 'admin' : 'user'
-      });
-      setAuthCookies(access, refresh, userRes.data.is_staff ? 'admin' : 'user');
+      setUser(userRes.data);
+      setAuthCookies(access, refresh, userRes.data.role);
       
       toast.success('Login successful!');
       const nextPath = sanitizeNextPath(new URLSearchParams(window.location.search).get('next'));

@@ -328,7 +328,7 @@ export default function ProfilePage() {
                       </div>
 
                       <div className="md:col-span-2 pt-6">
-                        <Button size="lg" className="h-16 px-12 rounded-2xl font-black text-lg shadow-xl uppercase italic" disabled={isSaving}>
+                        <Button type="submit" size="lg" className="h-16 px-12 rounded-2xl font-black text-lg shadow-xl uppercase italic" disabled={isSaving}>
                           {isSaving ? 'Saving...' : 'Save Changes'}
                         </Button>
                       </div>

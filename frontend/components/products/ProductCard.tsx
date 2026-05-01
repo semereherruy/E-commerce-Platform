@@ -12,6 +12,8 @@ import { Product } from '@/lib/types';
 import { motion } from 'motion/react';
 import { useCartActions } from '@/hooks/use-cart-actions';
 import { toast } from 'sonner';
+import { cn } from '@/lib/utils';
+import StarRating from './StarRating';
 
 import { api } from '@/lib/api-client';
 import { formatEtb } from '@/lib/format-currency';
@@ -118,8 +120,15 @@ export default function ProductCard({ product }: ProductCardProps) {
             <h3 className="font-bold text-lg leading-tight mb-2 line-clamp-2">{product.title}</h3>
           </Link>
           
-          <div className="flex items-center gap-1 mb-2">
-            <span className="text-[10px] font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-full uppercase tracking-widest">New Arrival</span>
+          <div className="flex items-center gap-1 mb-3">
+            <StarRating rating={product.average_rating || 0} size={3} />
+            {product.reviews_count > 0 ? (
+              <span className="text-[10px] text-muted-foreground font-bold ml-1">
+                {product.average_rating.toFixed(1)} ({product.reviews_count})
+              </span>
+            ) : (
+              <span className="text-[10px] text-muted-foreground font-medium ml-1 italic">No reviews yet</span>
+            )}
           </div>
 
 
