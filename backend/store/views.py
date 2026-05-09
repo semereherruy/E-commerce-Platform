@@ -339,7 +339,7 @@ class CartItemViewSet(ModelViewSet):
 class CustomerViewSet(ModelViewSet):
     queryset = Customer.objects.all()
     serializer_class = CustomerSerializer
-    permission_classes =[IsAdminUser]
+    permission_classes =[IsAdminRole]
     
     @action(detail=True, permission_classes=[ViewCustomerHistoryPermission])
     def history(self, request , pk):
@@ -495,7 +495,8 @@ class RecommendedProductsView(APIView):
         )
         serializer = ProductSerializer(products, many=True, context={"request": request})
         return Response(serializer.data)
-from .utils.chapa import initialize_chapa_payment, verify_chapa_transaction, validate_webhook_signature
+from .utils.chapa import validate_webhook_signature
+from .utils.payments import PaymentProviderRegistry
 
 class PaymentViewSet(GenericViewSet):
     permission_classes = [IsAuthenticated]
@@ -545,8 +546,12 @@ class PaymentViewSet(GenericViewSet):
                 payment.amount = order.total
                 payment.save(update_fields=["payment_method", "amount"])
         
-        # Call Chapa Utility
-        res = initialize_chapa_payment(order, return_url)
+        # Call Provider via Registry
+        try:
+            provider = PaymentProviderRegistry.get_provider(payment_method)
+            res = provider.initialize(order, return_url)
+        except ValueError as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
         
         if res.get('status') == 'success':
             payment.transaction_id = res['data']['tx_ref']
@@ -562,35 +567,17 @@ class PaymentViewSet(GenericViewSet):
         input_serializer.is_valid(raise_exception=True)
         tx_ref = input_serializer.validated_data["tx_ref"]
             
-        res = verify_chapa_transaction(tx_ref)
-        
-        if res.get('status') == 'success':
-            try:
-                payment = Payment.objects.select_related("order__customer__user").get(transaction_id=tx_ref)
-                if not request.user.is_staff and payment.order.customer.user_id != request.user.id:
-                    return Response(
-                        {"detail": "You do not have permission to verify this payment."},
-                        status=status.HTTP_403_FORBIDDEN,
-                    )
-                if (
-                    payment.payment_method
-                    and payment.order.payment_method
-                    and payment.payment_method != payment.order.payment_method
-                ):
-                    return Response(
-                        {"detail": "Payment method mismatch for this transaction."},
-                        status=status.HTTP_400_BAD_REQUEST,
-                    )
-                payment.verification_payload = res
-                payment.save(update_fields=["verification_payload"])
-                payment.mark_success()
-                return Response({"status": "success", "message": "Payment verified"})
-            except Payment.DoesNotExist:
-                return Response({"error": "Payment record not found"}, status=status.HTTP_404_NOT_FOUND)
-
-        # Failure / retry path
         try:
             payment = Payment.objects.select_related("order__customer__user").get(transaction_id=tx_ref)
+            provider_name = payment.payment_method or "chapa"
+            provider = PaymentProviderRegistry.get_provider(provider_name)
+            res = provider.verify(tx_ref)
+        except Payment.DoesNotExist:
+            return Response({"error": "Payment record not found"}, status=status.HTTP_404_NOT_FOUND)
+        except ValueError as e:
+             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        
+        if res.get('status') == 'success':
             if not request.user.is_staff and payment.order.customer.user_id != request.user.id:
                 return Response(
                     {"detail": "You do not have permission to verify this payment."},
@@ -607,11 +594,30 @@ class PaymentViewSet(GenericViewSet):
                 )
             payment.verification_payload = res
             payment.save(update_fields=["verification_payload"])
-            payment.mark_failed(reason=res.get("message") or res.get("error") or "Payment verification failed")
-        except Payment.DoesNotExist:
-            return Response({"error": "Payment record not found"}, status=status.HTTP_404_NOT_FOUND)
+            payment.mark_success()
+            return Response({"status": "success", "message": "Payment verified"})
+
+        # Failure / retry path
+        if not request.user.is_staff and payment.order.customer.user_id != request.user.id:
+            return Response(
+                {"detail": "You do not have permission to verify this payment."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+        if (
+            payment.payment_method
+            and payment.order.payment_method
+            and payment.payment_method != payment.order.payment_method
+        ):
+            return Response(
+                {"detail": "Payment method mismatch for this transaction."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        payment.verification_payload = res
+        payment.save(update_fields=["verification_payload"])
+        payment.mark_failed(reason=res.get("message") or res.get("error") or "Payment verification failed")
 
         return Response({"error": "Payment verification failed"}, status=status.HTTP_400_BAD_REQUEST)
+
 
     @action(detail=False, methods=['POST'])
     def webhook(self, request):

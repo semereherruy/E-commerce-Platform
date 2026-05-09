@@ -91,7 +91,7 @@ class TestPaymentFlow:
         response = api_client.post('/api/payments/verify/', {'tx_ref': 'non_existent_ref'})
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
-    @patch("store.views.verify_chapa_transaction")
+    @patch("store.utils.payments.ChapaProvider.verify")
     def test_verify_payment_failure_marks_order_failed(self, mock_verify, api_client, create_order):
         user, order = create_order()
         res_start = api_client.post(f'/api/orders/{order.id}/start_payment/')

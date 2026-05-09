@@ -1,5 +1,7 @@
 from decimal import Decimal, ROUND_HALF_UP
 import re
+from django.contrib.auth import get_user_model
+User = get_user_model()
 from django.db import transaction
 from django.db.models import F
 from rest_framework import serializers
@@ -55,8 +57,8 @@ class ProductSerializer(serializers.ModelSerializer):
     discount_label = serializers.SerializerMethodField()
 
     # Price fields
-    price = serializers.DecimalField(max_digits=6, decimal_places=2, required=False)
-    unit_price = serializers.DecimalField(max_digits=6, decimal_places=2, source="price", required=False)
+    price = serializers.DecimalField(max_digits=6, decimal_places=2, required=False, help_text="The canonical product price.")
+    unit_price = serializers.DecimalField(max_digits=6, decimal_places=2, source="price", required=False, help_text="Legacy field; use 'price' instead.")
     price_with_tax = serializers.SerializerMethodField()
 
     class Meta:
@@ -283,10 +285,19 @@ class CustomerSerializer(serializers.ModelSerializer):
 
 class CustomerMeUpdateSerializer(serializers.ModelSerializer):
     user_id = serializers.IntegerField(read_only=True)
+    first_name = serializers.CharField(source='user.first_name', required=False)
+    last_name = serializers.CharField(source='user.last_name', required=False)
+    email = serializers.EmailField(source='user.email', required=False)
 
     class Meta:
         model = Customer
-        fields = ['id', 'user_id', 'phone', 'birth_date']
+        fields = ['id', 'user_id', 'first_name', 'last_name', 'email', 'phone', 'birth_date']
+
+    def validate_email(self, value):
+        user = self.instance.user
+        if User.objects.filter(email=value).exclude(pk=user.pk).exists():
+            raise serializers.ValidationError("This email is already in use.")
+        return value
 
     def validate_phone(self, value):
         if value in (None, ""):
@@ -300,6 +311,14 @@ class CustomerMeUpdateSerializer(serializers.ModelSerializer):
                 "Enter a valid Ethiopian mobile number in the format +2519XXXXXXXX or +2517XXXXXXXX."
             )
         return value
+
+    def update(self, instance, validated_data):
+        user_data = validated_data.pop('user', {})
+        if user_data:
+            for attr, value in user_data.items():
+                setattr(instance.user, attr, value)
+            instance.user.save()
+        return super().update(instance, validated_data)
         
 class OrderItemSerializer(serializers.ModelSerializer):
     product = SimpleProductSerializer()
