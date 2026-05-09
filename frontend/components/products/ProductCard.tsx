@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
@@ -29,6 +29,10 @@ export default function ProductCard({ product }: ProductCardProps) {
   const [isLiked, setIsLiked] = useState(product.is_liked || false);
   const [isLikeLoading, setIsLikeLoading] = useState(false);
 
+  useEffect(() => {
+    setIsLiked(!!product.is_liked);
+  }, [product.id, product.is_liked]);
+
   const handleAddToCart = async (e: React.MouseEvent) => {
     e.stopPropagation();
     e.preventDefault();
@@ -51,8 +55,7 @@ export default function ProductCard({ product }: ProductCardProps) {
       const response = await api.post(`/store/products/${product.id}/likes/`);
       setIsLiked(response.data.liked);
     } catch (error: any) {
-      // Revert on error
-      setIsLiked(isLiked);
+      setIsLiked((prev) => !prev);
       if (error.response?.status === 401) {
         toast.error('Please log in to like products');
       } else {
@@ -97,12 +100,17 @@ export default function ProductCard({ product }: ProductCardProps) {
           )}
 
           <Button
+            type="button"
             variant="ghost"
             size="icon"
             onClick={handleLikeToggle}
-            className="absolute top-2 right-2 h-8 w-8 rounded-full bg-white/80 hover:bg-white text-foreground shadow-sm opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity"
+            disabled={isLikeLoading}
+            aria-pressed={isLiked}
+            aria-label={isLiked ? 'Remove from favorites' : 'Add to favorites'}
+            title="Save to favorites (tap again to remove)"
+            className="absolute top-2 right-2 h-8 w-8 rounded-full bg-white/80 hover:bg-white text-foreground shadow-sm opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all active:scale-125"
           >
-            <Heart className={`h-4 w-4 ${isLiked ? 'fill-destructive text-destructive' : ''}`} />
+            <Heart className={cn("h-4 w-4 transition-transform", isLiked ? 'fill-destructive text-destructive scale-110' : '')} />
           </Button>
         </div>
 

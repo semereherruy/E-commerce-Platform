@@ -41,6 +41,19 @@ export default async function Home() {
   const trendingProducts = trendingResult.error ? [] : (trendingResult.data as Product[]);
   const collections = collectionsResult.error ? [] : (collectionsResult.data as Collection[]);
 
+  const topCollections = collections.slice(0, 3);
+  const collectionPreviewResults = await Promise.all(
+    topCollections.map((c) =>
+      serverApiFetch<Product>(`/store/products/?collection_id=${c.id}&limit=1`, {
+        revalidate: 1800,
+      })
+    )
+  );
+  const collectionHeroImages = collectionPreviewResults.map((r) => {
+    if (r.error || !r.data || !Array.isArray(r.data) || r.data.length === 0) return null;
+    return r.data[0].images?.[0]?.image ?? null;
+  });
+
   return (
     <main className="min-h-screen flex flex-col bg-background">
       <Navbar />
@@ -90,12 +103,23 @@ export default async function Home() {
       <section className="py-24 bg-cream/20">
          <div className="container mx-auto px-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 h-[600px]">
-               {collections.length > 0 && (
-                 <Link href={`/products?collection_id=${collections[0].id}`} className="group h-full relative overflow-hidden rounded-[40px] shadow-2xl">
-                    <Image fill src="https://picsum.photos/seed/coll1/1200/800" alt={collections[0].title} className="object-cover w-full h-full transition-transform duration-700 group-hover:scale-110" referrerPolicy="no-referrer" sizes="(max-width: 768px) 100vw, 50vw" />
+               {topCollections.length > 0 && (
+                 <Link href={`/products?collection_id=${topCollections[0].id}`} className="group h-full relative overflow-hidden rounded-[40px] shadow-2xl">
+                    {collectionHeroImages[0] ? (
+                      <Image
+                        fill
+                        src={collectionHeroImages[0]}
+                        alt={topCollections[0].title}
+                        className="object-cover w-full h-full transition-transform duration-700 group-hover:scale-110"
+                        referrerPolicy="no-referrer"
+                        sizes="(max-width: 768px) 100vw, 50vw"
+                      />
+                    ) : (
+                      <div className="absolute inset-0 bg-gradient-to-br from-primary/50 via-muted to-background" aria-hidden />
+                    )}
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
                     <div className="absolute bottom-0 left-0 p-12">
-                       <h3 className="text-5xl font-black text-white italic tracking-tighter uppercase mb-4">{collections[0].title}</h3>
+                       <h3 className="text-5xl font-black text-white italic tracking-tighter uppercase mb-4">{topCollections[0].title}</h3>
                        <div className="flex items-center gap-2 text-primary font-bold">
                           SHOP NOW <ArrowRight className="h-5 w-5" />
                        </div>
@@ -103,21 +127,43 @@ export default async function Home() {
                  </Link>
                )}
                <div className="grid grid-rows-2 gap-8 h-full">
-                  {collections.length > 1 && (
-                    <Link href={`/products?collection_id=${collections[1].id}`} className="group relative overflow-hidden rounded-[40px] shadow-2xl">
-                       <Image fill src="https://picsum.photos/seed/coll2/1200/800" alt={collections[1].title} className="object-cover w-full h-full transition-transform duration-700 group-hover:scale-110" referrerPolicy="no-referrer" sizes="50vw" />
+                  {topCollections.length > 1 && (
+                    <Link href={`/products?collection_id=${topCollections[1].id}`} className="group relative overflow-hidden rounded-[40px] shadow-2xl">
+                       {collectionHeroImages[1] ? (
+                         <Image
+                           fill
+                           src={collectionHeroImages[1]}
+                           alt={topCollections[1].title}
+                           className="object-cover w-full h-full transition-transform duration-700 group-hover:scale-110"
+                           referrerPolicy="no-referrer"
+                           sizes="50vw"
+                         />
+                       ) : (
+                         <div className="absolute inset-0 bg-gradient-to-br from-muted via-primary/30 to-background" aria-hidden />
+                       )}
                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
                        <div className="absolute bottom-0 left-0 p-8">
-                          <h3 className="text-3xl font-black text-white italic tracking-tighter uppercase">{collections[1].title}</h3>
+                          <h3 className="text-3xl font-black text-white italic tracking-tighter uppercase">{topCollections[1].title}</h3>
                        </div>
                     </Link>
                   )}
-                  {collections.length > 2 && (
-                    <Link href={`/products?collection_id=${collections[2].id}`} className="group relative overflow-hidden rounded-[40px] shadow-2xl">
-                       <Image fill src="https://picsum.photos/seed/coll3/1200/800" alt={collections[2].title} className="object-cover w-full h-full transition-transform duration-700 group-hover:scale-110" referrerPolicy="no-referrer" sizes="50vw" />
+                  {topCollections.length > 2 && (
+                    <Link href={`/products?collection_id=${topCollections[2].id}`} className="group relative overflow-hidden rounded-[40px] shadow-2xl">
+                       {collectionHeroImages[2] ? (
+                         <Image
+                           fill
+                           src={collectionHeroImages[2]}
+                           alt={topCollections[2].title}
+                           className="object-cover w-full h-full transition-transform duration-700 group-hover:scale-110"
+                           referrerPolicy="no-referrer"
+                           sizes="50vw"
+                         />
+                       ) : (
+                         <div className="absolute inset-0 bg-gradient-to-br from-background via-primary/40 to-muted" aria-hidden />
+                       )}
                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
                        <div className="absolute bottom-0 left-0 p-8">
-                          <h3 className="text-3xl font-black text-white italic tracking-tighter uppercase">{collections[2].title}</h3>
+                          <h3 className="text-3xl font-black text-white italic tracking-tighter uppercase">{topCollections[2].title}</h3>
                        </div>
                     </Link>
                   )}

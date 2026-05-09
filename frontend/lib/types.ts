@@ -45,7 +45,7 @@ export interface Product {
 
 export interface Review {
   id: number;
-  data: string;
+  date: string;
   name: string;
   description: string;
   rating: number;

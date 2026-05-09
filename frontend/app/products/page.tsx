@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo, Suspense } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
@@ -16,14 +16,12 @@ import {
   SelectTrigger, 
   SelectValue 
 } from '@/components/ui/select';
-import { Filter, Search, SlidersHorizontal, X, Loader2 } from 'lucide-react';
+import { Search, SlidersHorizontal, X, Loader2 } from 'lucide-react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { api } from '@/lib/api-client';
 import { toast } from 'sonner';
-import { extractList, getApiErrorMessage } from '@/lib/api-helpers';
+import { extractList, getApiErrorMessage, type PaginatedResponse } from '@/lib/api-helpers';
 import { formatEtb } from '@/lib/format-currency';
-
-import { useSyncExternalStore } from 'react';
 
 function ProductsContent() {
   const searchParams = useSearchParams();
@@ -67,23 +65,25 @@ function ProductsContent() {
     setSearch(urlSearch);
   }, [urlSearch]);
 
-  // Debounced URL sync for search
+  const buildProductsHref = useCallback(
+    (searchValue: string, cid: string | null = collectionId) => {
+      const params = new URLSearchParams();
+      if (searchValue.trim()) params.set('search', searchValue.trim());
+      if (cid) params.set('collection_id', cid);
+      return params.toString() ? `/products?${params.toString()}` : '/products';
+    },
+    [collectionId]
+  );
+
+  // Debounced URL sync: avoids hammering router on every keystroke; scroll stays put.
   useEffect(() => {
     const debounceId = setTimeout(() => {
       if (search !== urlSearch) {
-        const params = new URLSearchParams();
-        if (search.trim()) {
-          params.set('search', search.trim());
-        }
-        if (collectionId) {
-          params.set('collection_id', collectionId);
-        }
-        const newUrl = params.toString() ? `/products?${params.toString()}` : '/products';
-        router.replace(newUrl);
+        router.replace(buildProductsHref(search), { scroll: false });
       }
-    }, 500);
+    }, 550);
     return () => clearTimeout(debounceId);
-  }, [search, collectionId, router, urlSearch]);
+  }, [search, collectionId, router, urlSearch, buildProductsHref]);
 
   // Reset page when filters change
   useEffect(() => {
@@ -106,9 +106,11 @@ function ProductsContent() {
         if (sortBy === 'price-low') params.ordering = 'price';
         else if (sortBy === 'price-high') params.ordering = '-price';
         else if (sortBy === 'newest') params.ordering = '-last_update';
+        else if (sortBy === 'popular') params.ordering = '-total_likes';
 
         const response = await api.get('/store/products/', { params });
-        const newProducts = extractList<Product>(response.data);
+        const payload = response.data as PaginatedResponse<Product>;
+        const newProducts = extractList<Product>(payload);
         
         if (page === 1) {
           setProducts(newProducts);
@@ -116,7 +118,7 @@ function ProductsContent() {
           setProducts(prev => [...prev, ...newProducts]);
         }
         
-        setHasMore(!!response.data.next);
+        setHasMore(!!payload?.next);
       } catch (error: any) {
         if (page === 1) setProducts([]);
         toast.error(getApiErrorMessage(error, 'Unable to load products right now.'));
@@ -146,15 +148,27 @@ function ProductsContent() {
           </div>
 
           <div className="flex w-full md:w-auto items-center gap-2">
-            <div className="relative flex-grow md:w-80">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input 
-                placeholder="Search products..." 
-                className="pl-10 h-12 border-2 bg-white"
+            <form
+              className="relative flex-grow md:w-80"
+              onSubmit={(e) => {
+                e.preventDefault();
+                router.replace(buildProductsHref(search), { scroll: false });
+              }}
+            >
+              <Input
+                placeholder="Search products..."
+                className="pl-4 pr-12 h-12 border-2 bg-white"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
               />
-            </div>
+              <button
+                type="submit"
+                className="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-md text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
+                aria-label="Search"
+              >
+                <Search className="h-5 w-5" />
+              </button>
+            </form>
             
             {isMounted ? (
 
@@ -218,6 +232,7 @@ function ProductsContent() {
                         setSearch('');
                         setPriceRange([0, priceBounds.max]);
                         setSortBy('newest');
+                        router.replace('/products', { scroll: false });
                       }}
                     >
                       RESET ALL
@@ -245,7 +260,8 @@ function ProductsContent() {
               <div className="mb-8">
                 <div className="flex flex-wrap gap-2">
                   <button
-                    onClick={() => router.push('/products')}
+                    type="button"
+                    onClick={() => router.push(buildProductsHref(urlSearch, null), { scroll: false })}
                     className={`px-4 py-2 rounded-full text-sm font-bold transition-colors ${
                       !collectionId ? 'bg-primary text-primary-foreground' : 'bg-muted hover:bg-muted/80'
                     }`}
@@ -254,8 +270,11 @@ function ProductsContent() {
                   </button>
                   {collections.map((collection) => (
                     <button
+                      type="button"
                       key={collection.id}
-                      onClick={() => router.push(`/products?collection_id=${collection.id}`)}
+                      onClick={() =>
+                        router.push(buildProductsHref(urlSearch, String(collection.id)), { scroll: false })
+                      }
                       className={`px-4 py-2 rounded-full text-sm font-bold transition-colors ${
                         collectionId === collection.id.toString() ? 'bg-primary text-primary-foreground' : 'bg-muted hover:bg-muted/80'
                       }`}

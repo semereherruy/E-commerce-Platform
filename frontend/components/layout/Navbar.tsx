@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { ShoppingCart, User, Search, Menu, Package, Info, LayoutGrid, LayoutDashboard, Settings2 } from 'lucide-react';
+import { ShoppingCart, User, Search, Menu, Package, Info, LayoutGrid, LayoutDashboard, Settings2, LogOut, Footprints, Shirt, Sparkles, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useCart, useAuth } from '@/lib/store';
@@ -23,8 +23,11 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogClose,
 } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
+import { api } from '@/lib/api-client';
 
 import { useSyncExternalStore } from 'react';
 
@@ -37,6 +40,22 @@ export default function Navbar() {
   
   const cart = useCart((state) => state.cart);
   const { user, logout } = useAuth();
+  const [trendingProducts, setTrendingProducts] = useState<{id: number, title: string}[]>([]);
+  
+  React.useEffect(() => {
+    if (searchOpen) {
+      const fetchTrending = async () => {
+        try {
+          const response = await api.get('/store/products/', { params: { page_size: 6, ordering: '-total_likes' } });
+          const data = response.data.results || response.data;
+          setTrendingProducts(Array.isArray(data) ? data : []);
+        } catch (error) {
+          console.error('Failed to fetch trending products', error);
+        }
+      };
+      fetchTrending();
+    }
+  }, [searchOpen]);
   const rawCount = cart?.items.reduce((acc, item) => acc + item.quantity, 0) || 0;
   const cartItemCount = rawCount > 99 ? '99+' : String(rawCount);
   
@@ -48,11 +67,16 @@ export default function Navbar() {
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    if (searchQuery.trim()) {
-      router.push(`/products?search=${encodeURIComponent(searchQuery.trim())}`);
+    const q = searchQuery.trim();
+    if (q) {
+      router.push(`/products?search=${encodeURIComponent(q)}`, { scroll: false });
       setSearchOpen(false);
       setSearchQuery('');
+      return;
     }
+    router.push('/products', { scroll: false });
+    setSearchOpen(false);
+    toast.message('Showing all products', { description: 'Enter a keyword to narrow results.' });
   };
 
   // Helper for Django Admin URL
@@ -124,22 +148,55 @@ export default function Navbar() {
                   />
                   <Button type="submit" className="hidden">Search</Button>
                 </form>
-                <div className="flex flex-wrap gap-2 mt-4">
-                  <span className="text-[10px] uppercase font-black text-muted-foreground tracking-widest w-full mb-1">Popular:</span>
-                  {['Shoes', 'Clothing', 'Accessories'].map((tag) => (
-                    <button
-                      key={tag}
-                      onClick={() => {
-                        setSearchQuery(tag);
-                        router.push(`/products?search=${tag}`);
-                        setSearchOpen(false);
-                      }}
-                      className="px-3 py-1 rounded-full bg-muted hover:bg-primary/10 hover:text-primary text-xs font-bold transition-colors"
-                    >
-                      {tag}
-                    </button>
+                <div className="flex flex-wrap gap-2 mt-6">
+                  <div className="flex items-center gap-2 w-full mb-2">
+                    <div className="h-px flex-1 bg-border" />
+                    <span className="text-[10px] uppercase font-black text-muted-foreground tracking-widest whitespace-nowrap">Popular Searches</span>
+                    <div className="h-px flex-1 bg-border" />
+                  </div>
+                  {trendingProducts.slice(0, 3).map((p) => (
+                    <DialogClose key={p.id} render={
+                      <Link href={`/products?search=${encodeURIComponent(p.title)}`} />
+                    }>
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => setSearchQuery(p.title)}
+                        className="h-10 rounded-xl font-bold gap-2 hover:bg-primary hover:text-white transition-all shadow-sm active:scale-95"
+                      >
+                        <Search className="h-4 w-4" />
+                        {p.title}
+                      </Button>
+                    </DialogClose>
                   ))}
                 </div>
+
+                {trendingProducts.length > 3 && (
+                  <div className="mt-6">
+                    <div className="flex items-center gap-2 w-full mb-3">
+                      <div className="h-px flex-1 bg-border" />
+                      <span className="text-[10px] uppercase font-black text-muted-foreground tracking-widest whitespace-nowrap">Trending Products</span>
+                      <div className="h-px flex-1 bg-border" />
+                    </div>
+                    <div className="grid gap-2">
+                      {trendingProducts.slice(3, 6).map((p) => (
+                        <DialogClose key={p.id} render={<Link href={`/products/${p.id}`} />}>
+                          <button
+                            className="flex items-center justify-between w-full p-4 rounded-xl bg-muted/30 hover:bg-primary/5 hover:ring-1 hover:ring-primary/20 transition-all text-left group"
+                          >
+                            <div className="flex items-center gap-3">
+                              <div className="h-8 w-8 rounded-lg bg-background flex items-center justify-center shadow-sm ring-1 ring-border/50">
+                                <Package className="h-4 w-4 text-primary" />
+                              </div>
+                              <span className="text-sm font-bold truncate max-w-[200px]">{p.title}</span>
+                            </div>
+                            <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
+                          </button>
+                        </DialogClose>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </DialogContent>
             </Dialog>
           )}
@@ -244,6 +301,19 @@ export default function Navbar() {
                   </SheetDescription>
                 </SheetHeader>
                 <nav className="flex flex-1 flex-col gap-1 overflow-y-auto px-3 py-4" aria-label="Mobile">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMobileOpen(false);
+                      setSearchOpen(true);
+                    }}
+                    className="flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-bold transition-colors text-foreground hover:bg-muted/80"
+                  >
+                    <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-background shadow-sm ring-1 ring-border/60">
+                      <Search className="h-4 w-4" aria-hidden />
+                    </span>
+                    Search
+                  </button>
                   {[
                     { href: '/products', label: 'Products', Icon: Package },
                     { href: '/collections', label: 'Collections', Icon: LayoutGrid },
@@ -323,6 +393,3 @@ export default function Navbar() {
     </nav>
   );
 }
-
-// Added missing icon imports to the top of the file
-import { LogOut } from 'lucide-react';

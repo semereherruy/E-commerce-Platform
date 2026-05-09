@@ -102,7 +102,7 @@ class ProductViewSet(ModelViewSet):
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_fields = ['collection_id']
     search_fields = ['title', 'description']
-    ordering_fields = ['price', 'last_update']
+    ordering_fields = ['price', 'last_update', 'total_likes']
     pagination_class = DefaultPagination
     filterset_class = ProductFilter
 
