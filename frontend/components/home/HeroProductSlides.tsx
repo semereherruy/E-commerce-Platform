@@ -50,7 +50,7 @@ export default function HeroProductSlides({
 
   if (loading) {
     return (
-      <div className="flex h-[600px] md:h-[800px] w-full items-center justify-center rounded-[32px] border bg-white/50">
+      <div className="flex h-full min-h-[500px] w-full items-center justify-center rounded-[32px] border bg-white/50">
         <Loader2 className="h-10 w-10 animate-spin text-primary" aria-hidden />
         <span className="sr-only">Loading featured products</span>
       </div>
@@ -59,9 +59,9 @@ export default function HeroProductSlides({
 
   if (error || products.length === 0) {
     return (
-      <div className="flex h-[600px] md:h-[800px] w-full flex-col items-center justify-center gap-4 rounded-[32px] border bg-muted/30 p-8 text-center">
+      <div className="flex h-full min-h-[500px] w-full flex-col items-center justify-center gap-4 rounded-[32px] border bg-muted/30 p-8 text-center">
         <p className="font-bold text-muted-foreground">Featured products will appear when the store is connected.</p>
-        <Button render={<Link href="/products" />}>Browse catalog</Button>
+        <Button nativeButton={false} render={<Link href="/products" />}>Browse catalog</Button>
       </div>
     );
   }
@@ -70,8 +70,8 @@ export default function HeroProductSlides({
   const imageUrl = product.images?.[0]?.image;
 
   return (
-    <div className="relative w-full overflow-hidden bg-white shadow-xl">
-      <div className="relative aspect-[16/9] md:aspect-[21/9] w-full bg-cream">
+    <div className="relative w-full h-full min-h-[500px] overflow-hidden bg-white">
+      <div className="relative h-full w-full min-h-[500px] bg-slate-100">
         {imageUrl ? (
           <Image
             src={imageUrl}
@@ -96,6 +96,7 @@ export default function HeroProductSlides({
           </p>
           <Button
             className="h-14 px-8 rounded-2xl font-black uppercase text-lg"
+            nativeButton={false}
             render={<Link href={`/products/${product.id}`} />}
           >
             Shop Now

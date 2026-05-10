@@ -84,12 +84,12 @@ export default function SuccessPage() {
           </div>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-8">
-            <Button size="lg" className="h-16 px-8 text-lg font-bold shadow-xl shadow-primary/20 bg-primary hover:bg-primary/90 text-primary-foreground group" render={<Link href="/profile" />}>
+            <Button size="lg" className="h-16 px-8 text-lg font-bold shadow-xl shadow-primary/20 bg-primary hover:bg-primary/90 text-primary-foreground group" nativeButton={false} render={<Link href="/profile" />}>
               <Package className="mr-2 h-5 w-5" />
               TRACK MY ORDER
               <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
             </Button>
-            <Button size="lg" variant="outline" className="h-16 px-8 text-lg font-bold border-2" render={<Link href="/" />}>
+            <Button size="lg" variant="outline" className="h-16 px-8 text-lg font-bold border-2" nativeButton={false} render={<Link href="/" />}>
               <Home className="mr-2 h-5 w-5" />
               BACK TO HOME
             </Button>

@@ -174,7 +174,7 @@ function ProductsContent() {
 
               <Sheet>
                 <SheetTrigger
-                  nativeButton={false}
+                  nativeButton={true}
                   render={
                     <Button variant="outline" size="icon" className="h-12 w-12 shrink-0 border-2">
                       <SlidersHorizontal className="h-5 w-5" />

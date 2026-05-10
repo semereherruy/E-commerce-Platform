@@ -17,6 +17,9 @@ environ.Env.read_env(os.path.join(BASE_DIR, '.env'))
 
 ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=['localhost', '127.0.0.1'])
 
+DOMAIN = env('DOMAIN', default='localhost:3000')
+SITE_NAME = 'Nebi Store'
+
 
 # Application definition
 
@@ -180,7 +183,10 @@ DJOSER ={
         'user_create':'core.serializers.UserCreateSerializer',
         'current_user':'core.serializers.UserSerializer',
         'user': 'core.serializers.UserSerializer',
-    }
+    },
+    'PASSWORD_RESET_CONFIRM_URL': 'reset/{uid}/{token}',
+    'DOMAIN': env('DOMAIN', default='localhost:3000'),
+    'SITE_NAME': env('SITE_NAME', default='Nebi Store'),
 }
 
 AUTH_USER_MODEL= 'core.User'

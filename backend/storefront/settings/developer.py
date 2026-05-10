@@ -24,13 +24,22 @@ CACHES = {
     }
 }
 
-INSTALLED_APPS += [
-    'silk',
-    'debug_toolbar',
-    'playground.apps.PlaygroundConfig',
-]
+# INSTALLED_APPS += [
+#     'silk',
+#     'debug_toolbar',
+#     'playground.apps.PlaygroundConfig',
+# ]
 
-MIDDLEWARE += [
-    'debug_toolbar.middleware.DebugToolbarMiddleware',
-    'silk.middleware.SilkyMiddleware',
-]
+# MIDDLEWARE += [
+#     'debug_toolbar.middleware.DebugToolbarMiddleware',
+#     'silk.middleware.SilkyMiddleware',
+# ]
+
+# Use console backend for development to see emails in terminal
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
+# Force Djoser to use frontend URL
+DOMAIN = 'localhost:3000'
+DJOSER['DOMAIN'] = DOMAIN
+DJOSER['PROTOCOL'] = 'http'
+DJOSER['SITE_NAME'] = 'Nebi Store'

@@ -4,7 +4,6 @@ verify_ssl = true
 name = "pip_conf_index_global"
 
 [packages]
-django-debug-toolbar = "*"
 drf-nested-routers = "*"
 django-filter = "*"
 drf-spectacular = "*"
@@ -20,7 +19,6 @@ flower = "*"
 pytest-django = "*"
 django-redis = "*"
 whitenoise = "*"
-django-silk = "*"
 matplotlib = "*"
 plotly = "*"
 pillow = "*"

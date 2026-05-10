@@ -93,10 +93,10 @@ export default function AboutPage() {
           <div className="container mx-auto px-4 text-center">
             <h2 className="text-5xl md:text-7xl font-black tracking-tighter uppercase mb-8">Ready to <span className="text-primary italic">Join us?</span></h2>
             <div className="flex flex-wrap justify-center gap-4">
-              <Button size="lg" className="h-16 px-10 text-lg font-black rounded-2xl shadow-xl" render={<Link href="/products" />}>
+              <Button size="lg" className="h-16 px-10 text-lg font-black rounded-2xl shadow-xl" nativeButton={false} render={<Link href="/products" />}>
                 SHOP THE COLLECTION
               </Button>
-              <Button size="lg" variant="outline" className="h-16 px-10 text-lg font-black rounded-2xl border-2" render={<Link href="/register" />}>
+              <Button size="lg" variant="outline" className="h-16 px-10 text-lg font-black rounded-2xl border-2" nativeButton={false} render={<Link href="/register" />}>
                 CREATE ACCOUNT
               </Button>
             </div>

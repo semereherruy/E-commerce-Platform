@@ -88,7 +88,7 @@ export default function ForgotPasswordPage() {
                <Button variant="ghost" onClick={() => setIsSent(false)} className="w-full h-12 font-bold hover:bg-primary/5 transition-colors">
                   Didn&apos;t receive it? Resend
                </Button>
-               <Button className="w-full h-14 text-lg font-black shadow-xl rounded-2xl uppercase italic" render={<Link href="/login" />}>
+               <Button className="w-full h-14 text-lg font-black shadow-xl rounded-2xl uppercase italic" nativeButton={false} render={<Link href="/login" />}>
                   BACK TO LOGIN
                </Button>
             </CardFooter>

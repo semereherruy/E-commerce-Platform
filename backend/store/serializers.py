@@ -168,14 +168,24 @@ class ReviewSerializer(serializers.ModelSerializer):
     
 class SimpleProductSerializer(serializers.ModelSerializer):
     unit_price = serializers.SerializerMethodField()
+    image = serializers.SerializerMethodField()
     
     def get_unit_price(self, obj) -> Decimal:
         from decimal import ROUND_HALF_UP, Decimal
         return obj.get_discounted_price().quantize(Decimal("0.01"), ROUND_HALF_UP)
+
+    def get_image(self, obj) -> str | None:
+        first_image = obj.images.first()
+        if first_image:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(first_image.image.url)
+            return first_image.image.url
+        return None
         
     class Meta:
         model = Product
-        fields = ['id','title','price', 'unit_price']
+        fields = ['id', 'title', 'price', 'unit_price', 'image']
         
         
 class CartItemSerializer(serializers.ModelSerializer):

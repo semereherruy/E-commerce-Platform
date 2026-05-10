@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { ShoppingCart, User, Search, Menu, Package, Info, LayoutGrid, LayoutDashboard, Settings2, LogOut, Footprints, Shirt, Sparkles, ChevronRight } from 'lucide-react';
+import { ShoppingCart, User, Search, Menu, Package, Info, LayoutGrid, LayoutDashboard, Settings2, ShieldCheck, LogOut, Footprints, Shirt, Sparkles, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useCart, useAuth } from '@/lib/store';
@@ -124,7 +124,7 @@ export default function Navbar() {
           {mounted && (
             <Dialog open={searchOpen} onOpenChange={setSearchOpen}>
               <DialogTrigger
-                nativeButton={false}
+                nativeButton={true}
                 render={
                   <Button variant="ghost" size="icon">
                     <Search className="h-5 w-5" />
@@ -204,7 +204,7 @@ export default function Navbar() {
           {mounted ? (
             <DropdownMenu>
               <DropdownMenuTrigger
-                nativeButton={false}
+                nativeButton={true}
                 render={
                   <Button variant="ghost" size="icon">
                     <User className="h-5 w-5" />
@@ -229,14 +229,14 @@ export default function Navbar() {
                     </DropdownMenuItem>
                     
                     {user.role === 'admin' && (
-                      <div className="bg-primary/5 rounded-xl mt-1 mb-1 p-1">
-                        <DropdownMenuItem nativeButton={false} render={<Link href="/admin/dashboard" />} className="rounded-lg font-bold text-primary">
-                          <LayoutDashboard className="mr-2 h-4 w-4" />
-                          Frontend Dashboard
+                      <div className="bg-primary/5 rounded-xl mt-1 mb-1 p-1 space-y-1">
+                        <DropdownMenuItem nativeButton={false} render={<Link href="/admin/dashboard" />} className="rounded-lg font-bold text-primary bg-primary/10 hover:bg-primary/20 transition-all cursor-pointer">
+                          <LayoutDashboard className="mr-2 h-4 w-4 shrink-0" />
+                          Store Dashboard
                         </DropdownMenuItem>
-                        <DropdownMenuItem nativeButton={false} render={<a href={backendAdminUrl} target="_blank" rel="noreferrer" />} className="rounded-lg font-bold text-amber-600">
-                          <Settings2 className="mr-2 h-4 w-4" />
-                          Django Backend Admin
+                        <DropdownMenuItem nativeButton={false} render={<a href={backendAdminUrl} rel="noreferrer" />} className="rounded-lg font-medium text-muted-foreground hover:text-amber-600 hover:bg-amber-50 transition-all cursor-pointer">
+                          <ShieldCheck className="mr-2 h-4 w-4 shrink-0" />
+                          System Admin
                         </DropdownMenuItem>
                       </div>
                     )}
@@ -283,7 +283,7 @@ export default function Navbar() {
           {mounted ? (
             <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
               <SheetTrigger
-                nativeButton={false}
+                nativeButton={true}
                 render={
                   <Button variant="ghost" size="icon" className="md:hidden" aria-label="Open menu">
                     <Menu className="h-5 w-5" />
@@ -349,17 +349,16 @@ export default function Navbar() {
                           pathname.startsWith('/admin') && 'bg-primary text-white'
                         )}
                       >
-                        <LayoutDashboard className="h-4 w-4" />
-                        Frontend Dashboard
+                        <LayoutDashboard className="h-4 w-4 shrink-0" />
+                        Store Dashboard
                       </Link>
                       <a
                         href={backendAdminUrl}
-                        target="_blank"
                         rel="noreferrer"
-                        className="flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-black transition-colors bg-amber-50 text-amber-700 ring-1 ring-amber-200"
+                        className="flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-bold transition-colors bg-amber-50 text-amber-700 ring-1 ring-amber-200/50 hover:bg-amber-100/80"
                       >
-                        <Settings2 className="h-4 w-4" />
-                        Backend Admin
+                        <ShieldCheck className="h-4 w-4 shrink-0" />
+                        System Admin
                       </a>
                     </div>
                   )}

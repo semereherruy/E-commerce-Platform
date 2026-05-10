@@ -47,9 +47,3 @@ if settings.DEBUG:
     # Playground is a dev utility and should not be mounted in production.
     if "playground" in settings.INSTALLED_APPS:
         urlpatterns += [path("playground/", include("playground.urls"))]
-
-    if "debug_toolbar" in settings.INSTALLED_APPS:
-        urlpatterns += [path("__debug__/", include("debug_toolbar.urls"))]
-
-    if "silk" in settings.INSTALLED_APPS:
-        urlpatterns += [path("silk/", include("silk.urls", namespace="silk"))]

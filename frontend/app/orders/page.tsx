@@ -84,7 +84,7 @@ export default function OrdersPage() {
                 <h1 className="text-4xl md:text-6xl font-black tracking-tighter uppercase mb-2">Order <span className="text-primary italic">History</span></h1>
                 <p className="text-muted-foreground font-medium text-lg">Track your shipments and view past purchases.</p>
              </div>
-             <Button variant="outline" className="rounded-2xl h-12 font-bold border-2" render={<Link href="/products" />}>
+             <Button variant="outline" className="rounded-2xl h-12 font-bold border-2" nativeButton={false} render={<Link href="/products" />}>
                 CONTINUE SHOPPING
              </Button>
           </div>
@@ -174,7 +174,7 @@ export default function OrdersPage() {
               </div>
               <h2 className="text-3xl font-black uppercase tracking-tighter mb-4 italic">No orders yet</h2>
               <p className="text-muted-foreground max-w-sm mb-12 font-medium">Your gear is waiting for you. Level up your style with our latest collection.</p>
-              <Button size="lg" className="h-16 px-12 font-black rounded-3xl shadow-xl italic uppercase" render={<Link href="/products" />}>
+              <Button size="lg" className="h-16 px-12 font-black rounded-3xl shadow-xl italic uppercase" nativeButton={false} render={<Link href="/products" />}>
                  Explore Shop
               </Button>
             </div>

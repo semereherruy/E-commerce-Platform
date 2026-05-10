@@ -29,7 +29,7 @@ export default function TrendingProducts({
               that are flying off the shelves.
             </p>
           </div>
-          <Button variant="ghost" className="group font-bold text-lg h-12" render={<Link href="/products" />}>
+          <Button variant="ghost" className="group font-bold text-lg h-12" nativeButton={false} render={<Link href="/products" />}>
             View All Products
             <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
           </Button>
