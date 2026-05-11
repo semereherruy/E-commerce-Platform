@@ -38,6 +38,9 @@ STORAGES = {
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 DEFAULT_FILE_STORAGE = "cloudinary_storage.storage.MediaCloudinaryStorage"
 
+# Prevent WhiteNoise from crashing if a static file referenced in CSS is missing
+WHITENOISE_MANIFEST_STRICT = False
+
 CLOUDINARY_STORAGE = {
     "CLOUD_NAME": env("CLOUDINARY_CLOUD_NAME"),
     "API_KEY": env("CLOUDINARY_API_KEY"),
