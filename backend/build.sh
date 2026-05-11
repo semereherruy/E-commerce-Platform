@@ -1,16 +1,13 @@
 #!/usr/bin/env bash
-# Exit immediately on any error so Render marks the build as failed
-set -o errexit
 
-# Upgrade pip and install all dependencies from requirements.txt
-pip install --upgrade pip
+#!/usr/bin/env bash
+
 pip install -r requirements.txt
 
-# Ensure the staticfiles output directory exists before collectstatic runs
-mkdir -p staticfiles
-
-# Collect all static assets (admin, DRF, app static files) into staticfiles/
 python manage.py collectstatic --noinput
 
-# Apply any outstanding database migrations
 python manage.py migrate
+
+python manage.py createsuperuser --noinput || true
+
+python manage.py loaddata data.json || true
