@@ -2,13 +2,5 @@
   "buildCommand": "npm run build",
   "devCommand": "npm run dev",
   "installCommand": "npm install",
-  "framework": "nextjs",
-  "env": [
-    {
-      "key": "NEXT_PUBLIC_API_URL",
-      "value": "https://nebi-store-backend-prod.onrender.com/api/v1",
-      "type": "string",
-      "description": "Backend API URL - Update this to your production backend URL"
-    }
-  ]
+  "framework": "nextjs"
 }
