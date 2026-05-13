@@ -1,9 +1,12 @@
 import { extractList } from './api-helpers';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL;
+const RAW_API_URL = process.env.NEXT_PUBLIC_API_URL || '';
+const API_URL = RAW_API_URL.endsWith('/api/v1') 
+  ? RAW_API_URL 
+  : `${RAW_API_URL.replace(/\/$/, '')}/api/v1`;
 
 // Validate API_URL at module load time
-if (!API_URL) {
+if (!RAW_API_URL) {
   console.error('CRITICAL: NEXT_PUBLIC_API_URL is not set. Server-side fetches will fail.');
 }
 
@@ -28,7 +31,7 @@ export async function serverApiFetch<T>(
   const { single = false, revalidate = 3600 } = options;
 
   // Fail gracefully if API_URL is not configured
-  if (!API_URL) {
+  if (!RAW_API_URL) {
     const errorMsg = 'NEXT_PUBLIC_API_URL environment variable is not set. Cannot fetch from API.';
     console.error(errorMsg, { endpoint });
     return { data: single ? null : ([] as T[]), error: errorMsg, isEmpty: true };

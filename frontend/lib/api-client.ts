@@ -1,15 +1,18 @@
 import axios, { AxiosError } from 'axios';
 import { clearAuthCookies } from './auth';
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL;
+const RAW_BASE_URL = process.env.NEXT_PUBLIC_API_URL || '';
+const BASE_URL = RAW_BASE_URL.endsWith('/api/v1') 
+  ? RAW_BASE_URL 
+  : `${RAW_BASE_URL.replace(/\/$/, '')}/api/v1`;
 
 // Validate BASE_URL for client-side usage
-if (typeof window !== 'undefined' && !BASE_URL) {
+if (typeof window !== 'undefined' && !RAW_BASE_URL) {
   console.error('CRITICAL: NEXT_PUBLIC_API_URL is not set. Client-side API calls will fail.');
 }
 
 export const api = axios.create({
-  baseURL: BASE_URL || '',
+  baseURL: RAW_BASE_URL ? BASE_URL : '',
   headers: {
     'Content-Type': 'application/json',
   },
