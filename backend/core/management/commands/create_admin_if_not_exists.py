@@ -36,7 +36,34 @@ class Command(BaseCommand):
                 f"{self.ENV_PASSWORD} must all be set together."
             )
 
+        try:
+            password_validation.validate_password(password)
+        except ValidationError as exc:
+            raise CommandError(
+                "DJANGO_SUPERUSER_PASSWORD failed validation: "
+                + "; ".join(exc.messages)
+            ) from exc
+
         User = get_user_model()
+
+        # TEMPORARY: Render Free admin recovery — remove after access is restored.
+        existing_user = User.objects.filter(email__iexact=email).first()
+        if existing_user is not None:
+            with transaction.atomic():
+                existing_user.set_password(password)
+                existing_user.is_staff = True
+                existing_user.is_superuser = True
+                existing_user.save(
+                    update_fields=["password", "is_staff", "is_superuser"]
+                )
+
+            self.stdout.write(
+                self.style.WARNING(
+                    "TEMPORARY RECOVERY: Reset password and restored admin access "
+                    f"for '{email}' (username: '{existing_user.username}')."
+                )
+            )
+            return
 
         if User.objects.filter(is_superuser=True).exists():
             self.stdout.write(
@@ -53,22 +80,6 @@ class Command(BaseCommand):
                 )
             )
             return
-
-        if User.objects.filter(email__iexact=email).exists():
-            self.stdout.write(
-                self.style.SUCCESS(
-                    f"A user with email '{email}' already exists; skipping."
-                )
-            )
-            return
-
-        try:
-            password_validation.validate_password(password)
-        except ValidationError as exc:
-            raise CommandError(
-                "DJANGO_SUPERUSER_PASSWORD failed validation: "
-                + "; ".join(exc.messages)
-            ) from exc
 
         try:
             with transaction.atomic():
