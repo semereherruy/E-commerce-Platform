@@ -94,6 +94,24 @@ Before you begin, ensure you have the following installed:
     python manage.py runserver
     ```
 
+### Render deployment: initial superuser (no shell access)
+
+On Render Free Plan you cannot run `createsuperuser` interactively. The build script runs an idempotent management command instead:
+
+```bash
+python manage.py create_admin_if_not_exists
+```
+
+Add these **Environment** variables in the Render dashboard (copy names from `backend/.env.example`):
+
+| Variable | Description |
+| :--- | :--- |
+| `DJANGO_SUPERUSER_USERNAME` | Admin login username |
+| `DJANGO_SUPERUSER_EMAIL` | Admin email (also used as login; `core.User` uses email as `USERNAME_FIELD`) |
+| `DJANGO_SUPERUSER_PASSWORD` | Strong password (remove from Render after first successful deploy) |
+
+The command creates the superuser only once. On later deploys it detects the existing user and exits safely. Never hardcode credentials in `build.sh` or source code.
+
 7.  **Run Celery Worker (Optional, for background tasks)**
     ```bash
     celery -A storefront worker --loglevel=info
