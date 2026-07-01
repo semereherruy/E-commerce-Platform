@@ -1,7 +1,9 @@
 import os
 
-from django.contrib.auth import get_user_model
+from django.contrib.auth import get_user_model, password_validation
+from django.core.exceptions import ValidationError
 from django.core.management.base import BaseCommand, CommandError
+from django.db import IntegrityError, transaction
 
 
 class Command(BaseCommand):
@@ -16,7 +18,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         username = os.environ.get(self.ENV_USERNAME, "").strip()
-        email = os.environ.get(self.ENV_EMAIL, "").strip()
+        email = os.environ.get(self.ENV_EMAIL, "").strip().lower()
         password = os.environ.get(self.ENV_PASSWORD, "")
 
         values = (username, email, password)
@@ -36,10 +38,18 @@ class Command(BaseCommand):
 
         User = get_user_model()
 
+        if User.objects.filter(is_superuser=True).exists():
+            self.stdout.write(
+                self.style.SUCCESS(
+                    "A superuser already exists; skipping admin creation."
+                )
+            )
+            return
+
         if User.objects.filter(username=username).exists():
             self.stdout.write(
                 self.style.SUCCESS(
-                    f"Superuser with username '{username}' already exists; skipping."
+                    f"A user with username '{username}' already exists; skipping."
                 )
             )
             return
@@ -52,8 +62,28 @@ class Command(BaseCommand):
             )
             return
 
-        # core.User uses email as USERNAME_FIELD and username in REQUIRED_FIELDS.
-        User.objects.create_superuser(email=email, password=password, username=username)
+        try:
+            password_validation.validate_password(password)
+        except ValidationError as exc:
+            raise CommandError(
+                "DJANGO_SUPERUSER_PASSWORD failed validation: "
+                + "; ".join(exc.messages)
+            ) from exc
+
+        try:
+            with transaction.atomic():
+                User.objects.create_superuser(
+                    email=email,
+                    password=password,
+                    username=username,
+                )
+        except IntegrityError as exc:
+            raise CommandError(
+                "Superuser could not be created due to a database conflict. "
+                "Another deploy may have created the account concurrently."
+            ) from exc
+        except ValueError as exc:
+            raise CommandError(str(exc)) from exc
 
         self.stdout.write(
             self.style.SUCCESS(f"Superuser '{username}' created successfully.")

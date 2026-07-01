@@ -16,7 +16,12 @@ class TestAnalyticsJWTAuth:
         assert response.status_code in [status.HTTP_401_UNAUTHORIZED, status.HTTP_403_FORBIDDEN]
 
     def test_get_analytics_data_non_staff_fails(self):
-        user = User.objects.create_user(username='testuser', password='password123', is_staff=False)
+        user = User.objects.create_user(
+            "testuser@example.com",
+            password="password123",
+            username="testuser",
+            is_staff=False,
+        )
         client = APIClient()
         client.force_authenticate(user=user)
         url = reverse('analytics_data')
@@ -24,7 +29,12 @@ class TestAnalyticsJWTAuth:
         assert response.status_code == status.HTTP_403_FORBIDDEN
 
     def test_get_analytics_data_admin_succeeds(self):
-        user = User.objects.create_user(username='adminuser', password='password123', is_staff=True)
+        user = User.objects.create_user(
+            "adminuser@example.com",
+            password="password123",
+            username="adminuser",
+            is_staff=True,
+        )
         client = APIClient()
         client.force_authenticate(user=user)
         url = reverse('analytics_data')
