@@ -11,7 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { Product } from '@/lib/types';
 import { useCartActions } from '@/hooks/use-cart-actions';
 import { useAuth } from '@/lib/store';
-import { isAdminRole } from '@/lib/roles';
+import { isShoppingRestrictedUser } from '@/lib/roles';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import StarRating from './StarRating';
@@ -20,6 +20,7 @@ import { trackProductClick, trackAddToCart } from '@/lib/analytics';
 import { api } from '@/lib/api-client';
 import { formatEtb } from '@/lib/format-currency';
 import { getEffectiveUnitPrice } from '@/lib/product-price';
+import { optimizeImageUrl } from '@/lib/image-url';
 
 interface ProductCardProps {
   product: Product;
@@ -28,7 +29,7 @@ interface ProductCardProps {
 export default function ProductCard({ product }: ProductCardProps) {
   const { addToCart } = useCartActions();
   const user = useAuth((state) => state.user);
-  const isAdmin = isAdminRole(user?.role);
+  const isAdmin = isShoppingRestrictedUser(user);
   const router = useRouter();
   const [isLiked, setIsLiked] = useState(product.is_liked || false);
   const [isLikeLoading, setIsLikeLoading] = useState(false);
@@ -40,8 +41,10 @@ export default function ProductCard({ product }: ProductCardProps) {
   const handleAddToCart = async (e: React.MouseEvent) => {
     e.stopPropagation();
     e.preventDefault();
-    await addToCart(product, 1);
-    trackAddToCart(product.id.toString(), product.title, getEffectiveUnitPrice(product));
+    const ok = await addToCart(product, 1);
+    if (ok) {
+      trackAddToCart(product.id.toString(), product.title, getEffectiveUnitPrice(product));
+    }
   };
 
 
@@ -84,7 +87,7 @@ export default function ProductCard({ product }: ProductCardProps) {
         <div className="relative aspect-square overflow-hidden bg-cream">
           {product.images?.[0] ? (
             <Image
-              src={product.images[0].image}
+              src={optimizeImageUrl(product.images[0].image, 600)}
               alt={product.title}
               fill
               className="object-cover transition-transform duration-500 group-hover:scale-110"
@@ -103,19 +106,21 @@ export default function ProductCard({ product }: ProductCardProps) {
             </Badge>
           )}
 
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            onClick={handleLikeToggle}
-            disabled={isLikeLoading}
-            aria-pressed={isLiked}
-            aria-label={isLiked ? 'Remove from favorites' : 'Add to favorites'}
-            title="Save to favorites (tap again to remove)"
-            className="absolute top-2 right-2 h-8 w-8 rounded-full bg-white/80 hover:bg-white text-foreground shadow-sm opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all active:scale-125"
-          >
-            <Heart className={cn("h-4 w-4 transition-transform", isLiked ? 'fill-destructive text-destructive scale-110' : '')} />
-          </Button>
+          {!isAdmin && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              onClick={handleLikeToggle}
+              disabled={isLikeLoading}
+              aria-pressed={isLiked}
+              aria-label={isLiked ? 'Remove from favorites' : 'Add to favorites'}
+              title="Save to favorites (tap again to remove)"
+              className="absolute top-2 right-2 h-8 w-8 rounded-full bg-white/80 hover:bg-white text-foreground shadow-sm opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all active:scale-125"
+            >
+              <Heart className={cn("h-4 w-4 transition-transform", isLiked ? 'fill-destructive text-destructive scale-110' : '')} />
+            </Button>
+          )}
         </div>
 
         <CardContent className="p-4 flex-grow flex flex-col">

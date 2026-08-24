@@ -72,6 +72,44 @@ def test_staff_cannot_create_cart(api_client):
 
 
 @pytest.mark.django_db
+def test_guest_cannot_create_cart(api_client):
+  response = api_client.post("/api/v1/store/carts/", {}, format="json")
+  assert response.status_code == status.HTTP_401_UNAUTHORIZED
+
+
+@pytest.mark.django_db
+def test_guest_cannot_add_cart_items(api_client):
+  product = baker.make(Product, price=10, inventory=5)
+  cart = baker.make(Cart)
+  api_client.force_authenticate(user=None)
+
+  response = api_client.post(
+    f"/api/v1/store/carts/{cart.id}/items/",
+    {"product_id": product.id, "quantity": 1},
+    format="json",
+  )
+  assert response.status_code == status.HTTP_401_UNAUTHORIZED
+
+
+@pytest.mark.django_db
+def test_customer_can_create_cart_and_add_items(api_client):
+  user = baker.make("core.User", is_staff=False, is_superuser=False)
+  Customer.objects.get_or_create(user=user)
+  api_client.force_authenticate(user=user)
+
+  create_response = api_client.post("/api/v1/store/carts/", {}, format="json")
+  assert create_response.status_code == status.HTTP_201_CREATED
+
+  product = baker.make(Product, price=10, inventory=5)
+  item_response = api_client.post(
+    f"/api/v1/store/carts/{create_response.data['id']}/items/",
+    {"product_id": product.id, "quantity": 1},
+    format="json",
+  )
+  assert item_response.status_code == status.HTTP_201_CREATED
+
+
+@pytest.mark.django_db
 def test_staff_cannot_add_cart_items(api_client):
   staff_user = baker.make("core.User", is_staff=True)
   customer, _ = Customer.objects.get_or_create(user=staff_user)

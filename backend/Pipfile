@@ -39,6 +39,7 @@ pytest-watch = "*"
 pytest = "*"
 locust = "*"
 aiosmtpd = "*"
+model-bakery = "*"
 
 [requires]
 python_version = "3.12"

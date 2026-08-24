@@ -26,6 +26,20 @@ const EMPTY_FORM = {
 
 type ProductForm = typeof EMPTY_FORM & { discount_active: boolean };
 
+// Must match the server-side limit in backend/store/validators.py.
+const MAX_IMAGE_MB = 10;
+
+/** Returns an error message when the file is not a valid image within the size limit. */
+function validateImageFile(file: File): string | null {
+  if (!file.type.startsWith('image/')) {
+    return 'Please select an image file (JPG, PNG, WebP, etc.).';
+  }
+  if (file.size > MAX_IMAGE_MB * 1024 * 1024) {
+    return 'Image size must be 10 MB or less.';
+  }
+  return null;
+}
+
 function Modal({ title, onClose, children }: { title: string; onClose: () => void; children: React.ReactNode }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
@@ -53,13 +67,10 @@ function ImageUploadPanel({ productId, images, onUploaded }: {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Basic validation
-    if (!file.type.startsWith('image/')) {
-      toast.error('Please select an image file (JPG, PNG, WebP, etc.)');
-      return;
-    }
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error('Image must be smaller than 5 MB.');
+    const validationError = validateImageFile(file);
+    if (validationError) {
+      toast.error(validationError);
+      if (fileRef.current) fileRef.current.value = '';
       return;
     }
 
@@ -132,11 +143,11 @@ function ImageUploadPanel({ productId, images, onUploaded }: {
         >
           {uploading
             ? <><Loader2 className="h-4 w-4 animate-spin" /> Uploading...</>
-            : <><Upload className="h-4 w-4" /> Upload Image (max 5 MB)</>
+            : <><Upload className="h-4 w-4" /> Upload Image (max 10 MB)</>
           }
         </Button>
         <p className="text-[10px] text-muted-foreground font-medium mt-1 ml-1">
-          Accepted: JPG, PNG, WebP. Max 5 MB per file.
+          Accepted: JPG, PNG, WebP. Max 10 MB per file.
         </p>
       </div>
     </div>
@@ -265,12 +276,26 @@ function ProductFormModal({
             <ImageIcon className="h-3 w-3" /> Initial Product Image (Optional)
           </Label>
           <div className="flex items-center gap-4">
-             <input
+            <input
               ref={stagedFileRef}
               type="file"
               accept="image/*"
               className="hidden"
-              onChange={(e) => setStagedImage(e.target.files?.[0] || null)}
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (!file) {
+                  setStagedImage(null);
+                  return;
+                }
+                const error = validateImageFile(file);
+                if (error) {
+                  toast.error(error);
+                  if (stagedFileRef.current) stagedFileRef.current.value = '';
+                  setStagedImage(null);
+                  return;
+                }
+                setStagedImage(file);
+              }}
             />
             <Button
               type="button"

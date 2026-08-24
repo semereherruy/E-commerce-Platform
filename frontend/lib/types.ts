@@ -5,6 +5,8 @@ export interface User {
   first_name: string;
   last_name: string;
   role: 'admin' | 'user';
+  is_staff?: boolean;
+  is_superuser?: boolean;
 }
 
 export interface Collection {

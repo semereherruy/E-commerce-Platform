@@ -17,15 +17,21 @@ def get_effective_roles(user) -> set[str]:
     if getattr(user, "is_staff", False):
         roles.add("admin")
 
-    # Optional group-based roles (no schema changes required).
-    # Example: create a Django group named "analytics_admin" and assign it
-    # to users who should access analytics features.
     group_names = set(user.groups.values_list("name", flat=True))
     for role in {"manager", "support", "nutritionist", "analytics_admin"}:
         if role in group_names:
             roles.add(role)
 
     return roles
+
+
+def is_store_manager_account(user) -> bool:
+    """True for staff, superuser, or effective admin role — blocked from customer shopping."""
+    if not user or not user.is_authenticated:
+        return False
+    if getattr(user, "is_staff", False) or getattr(user, "is_superuser", False):
+        return True
+    return "admin" in get_effective_roles(user)
 
 
 class HasAnyRole(permissions.BasePermission):
@@ -54,26 +60,42 @@ class IsAnalyticsRole(HasAnyRole):
 
 class IsAdminOrReadOnly(permissions.BasePermission):
     def has_permission(self, request, view):
-        if  request.method in permissions.SAFE_METHODS:
+        if request.method in permissions.SAFE_METHODS:
             return True
         effective = get_effective_roles(getattr(request, "user", None))
         return bool(effective.intersection({"admin"}))
-    
-    
+
+
 class DenyStaffForCustomerWrites(permissions.BasePermission):
     """
-    Staff users manage the store via admin interfaces; block them from
-    customer cart mutations.
+    Store-manager accounts use admin tools; block customer shopping mutations.
     """
 
     message = "Staff users cannot perform customer shopping actions."
 
     def has_permission(self, request, view):
         user = getattr(request, "user", None)
-        if user and user.is_authenticated and getattr(user, "is_staff", False):
-            if request.method not in permissions.SAFE_METHODS:
-                return False
+        if is_store_manager_account(user) and request.method not in permissions.SAFE_METHODS:
+            return False
         return True
+
+
+class IsCustomer(permissions.BasePermission):
+    """
+    Customer-only shopping access.
+
+    Guests (unauthenticated) are rejected with 401 and store-manager
+    accounts (staff/superuser/admin role) are rejected with 403, so carts,
+    orders, likes and reviews can only ever be mutated by real customers.
+    """
+
+    message = "Only customer accounts can perform shopping actions."
+
+    def has_permission(self, request, view):
+        user = getattr(request, "user", None)
+        if not user or not user.is_authenticated:
+            return False
+        return not is_store_manager_account(user)
 
 
 class ViewCustomerHistoryPermission(permissions.BasePermission):
@@ -82,10 +104,8 @@ class ViewCustomerHistoryPermission(permissions.BasePermission):
         if not user or not user.is_authenticated:
             return False
 
-        # Legacy path: if Django permissions are configured, keep supporting it.
         if user.has_perm("store.view_history"):
             return True
 
-        # RBAC path: allow admin/support/analytics_admin.
         effective = get_effective_roles(user)
         return bool(effective.intersection({"admin", "support", "analytics_admin"}))

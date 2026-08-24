@@ -1,15 +1,24 @@
+import { useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import { useCart, useAuth } from '@/lib/store';
-import { isAdminRole } from '@/lib/roles';
+import { isShoppingRestrictedUser } from '@/lib/roles';
 import { api } from '@/lib/api-client';
 import { toast } from 'sonner';
 import { Product } from '@/lib/types';
 import { useMutation } from './use-api';
+
+/** Current location encoded for the login ?next= parameter. */
+function getLoginRedirectUrl(): string {
+  const current = `${window.location.pathname}${window.location.search}`;
+  return `/login?next=${encodeURIComponent(current)}`;
+}
 
 export function useCartActions() {
   const cart = useCart((state) => state.cart);
   const user = useAuth((state) => state.user);
   const addItemLocal = useCart((state) => state.addItem);
   const setCartId = useCart((state) => state.setCartId);
+  const router = useRouter();
 
   const addToCartMutation = useMutation(
     async ({ product, quantity, cartId }: { product: Product; quantity: number; cartId: string }) => {
@@ -28,8 +37,16 @@ export function useCartActions() {
     }
   );
 
-  const addToCart = async (product: Product, quantity: number = 1) => {
-    if (isAdminRole(user?.role)) {
+  const addToCart = useCallback(async (product: Product, quantity: number = 1): Promise<boolean> => {
+    // Guests must log in before anything is added to a cart.
+    if (!user) {
+      toast.info('Please log in to continue shopping.');
+      router.push(getLoginRedirectUrl());
+      return false;
+    }
+
+    // Store-manager accounts are not customers.
+    if (isShoppingRestrictedUser(user)) {
       toast.error('Admin accounts cannot use the customer cart.');
       return false;
     }
@@ -59,10 +76,10 @@ export function useCartActions() {
       return true;
     } catch (error: any) {
       console.error('Failed to add item to cart:', error);
-      // Item is already added locally, so we don't need to revert
       return false;
     }
-  };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, cart?.id, router]);
 
   return {
     addToCart,

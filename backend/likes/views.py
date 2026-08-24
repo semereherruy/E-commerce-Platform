@@ -2,6 +2,7 @@
 from rest_framework import viewsets, status
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny
+from store.permissions import DenyStaffForCustomerWrites
 from django.shortcuts import get_object_or_404
 from django.contrib.contenttypes.models import ContentType
 from drf_spectacular.utils import extend_schema, extend_schema_view, OpenApiParameter
@@ -41,7 +42,7 @@ class ProductLikeViewSet(viewsets.GenericViewSet):
         # Allow listing to anonymous but creating/deleting requires auth.
         if self.action in ("list",):
             return [AllowAny()]
-        return [IsAuthenticated()]
+        return [IsAuthenticated(), DenyStaffForCustomerWrites()]
 
     def get_queryset(self):
         product_pk = self.kwargs.get("product_pk")
@@ -85,7 +86,7 @@ class ProductLikeViewSet(viewsets.GenericViewSet):
         product_pk = self.kwargs.get("product_pk")
         ct = ContentType.objects.get_for_model(Product)
         like = get_object_or_404(LikedItem, pk=pk, content_type=ct, object_id=product_pk)
-        if like.user != request.user and not request.user.is_staff:
+        if like.user != request.user:
             return Response(status=status.HTTP_403_FORBIDDEN)
         like.delete()
         product = get_object_or_404(Product, pk=product_pk)

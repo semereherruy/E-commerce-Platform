@@ -24,7 +24,7 @@ from django.http import JsonResponse
 from django.contrib.contenttypes.models import ContentType
 from likes.models import LikedItem
 from .permissions import IsAdminOrReadOnly,ViewCustomerHistoryPermission
-from .permissions import IsAdminRole, DenyStaffForCustomerWrites
+from .permissions import IsAdminRole, DenyStaffForCustomerWrites, IsCustomer
 from .models import (
     Product,
     Collection,
@@ -231,7 +231,7 @@ class ReviewViewSet(ModelViewSet):
     def get_permissions(self):
         if self.request.method in ('GET', 'HEAD', 'OPTIONS'):
             return [AllowAny()]
-        return [IsAuthenticated()]
+        return [IsAuthenticated(), DenyStaffForCustomerWrites()]
     
     def get_queryset(self):
         return Review.objects.filter(product_id=self.kwargs['product_pk'])
@@ -240,12 +240,12 @@ class ReviewViewSet(ModelViewSet):
         return {'product_id':self.kwargs['product_pk'], 'request': self.request}
 
     def perform_update(self, serializer):
-        if serializer.instance.user_id != self.request.user.id and not self.request.user.is_staff:
+        if serializer.instance.user_id != self.request.user.id:
             raise PermissionDenied("You are not allowed to edit this review.")
         serializer.save()
 
     def perform_destroy(self, instance):
-        if instance.user_id != self.request.user.id and not self.request.user.is_staff:
+        if instance.user_id != self.request.user.id:
             raise PermissionDenied("You are not allowed to delete this review.")
         instance.delete()
     
@@ -255,7 +255,7 @@ class CartViewSet(CreateModelMixin,
                   DestroyModelMixin,
                   GenericViewSet):
     serializer_class = CartSerializer
-    permission_classes = [AllowAny, DenyStaffForCustomerWrites]
+    permission_classes = [IsCustomer]
 
     def get_queryset(self):
         from django.db.models import Q
@@ -310,7 +310,7 @@ class CartViewSet(CreateModelMixin,
     ),
 )
 class CartItemViewSet(ModelViewSet):
-    permission_classes = [AllowAny, DenyStaffForCustomerWrites]
+    permission_classes = [IsCustomer]
     http_method_names = ['get','post','patch','delete']
     
     def get_serializer_class(self):

@@ -66,7 +66,17 @@ class UserSerializer(BaseUserSerializer):
     role = serializers.SerializerMethodField()
 
     class Meta(BaseUserSerializer.Meta):
-        fields = ['id', 'username', 'email', 'first_name', 'last_name', 'role']
+        fields = [
+            'id',
+            'username',
+            'email',
+            'first_name',
+            'last_name',
+            'role',
+            'is_staff',
+            'is_superuser',
+        ]
+        read_only_fields = ['is_staff', 'is_superuser']
 
     def get_role(self, obj) -> str:
         # Backward-compatible default expected by the frontend is "admin" or "user".

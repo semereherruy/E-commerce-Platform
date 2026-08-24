@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import ProductCard from '@/components/products/ProductCard';
 import { Product, Review } from '@/lib/types';
 import { Button } from '@/components/ui/button';
@@ -9,18 +10,19 @@ import { Badge } from '@/components/ui/badge';
 import { Star, Heart, Share2, ShoppingCart, Plus, Minus, MessageSquare, Truck, ShieldCheck, RefreshCcw, Loader2 } from 'lucide-react';
 import Image from 'next/image';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Separator } from '@/components/ui/separator';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { api } from '@/lib/api-client';
 import StarRating from '@/components/products/StarRating';
+import AdminShoppingNotice from '@/components/AdminShoppingNotice';
 import { useCartActions } from '@/hooks/use-cart-actions';
 import { useAuth } from '@/lib/store';
-import { isAdminRole } from '@/lib/roles';
+import { isShoppingRestrictedUser } from '@/lib/roles';
 
-import { extractList, getApiErrorMessage } from '@/lib/api-helpers';
+import { getApiErrorMessage } from '@/lib/api-helpers';
 import { formatEtb } from '@/lib/format-currency';
 import { getEffectiveUnitPrice } from '@/lib/product-price';
+import { optimizeImageUrl } from '@/lib/image-url';
 import { FREE_SHIPPING_MIN_ETB } from '@/lib/shipping';
 
 interface ProductDetailClientProps {
@@ -43,7 +45,8 @@ export default function ProductDetailClient({
   const [zoomPosition, setZoomPosition] = useState({ x: 0, y: 0 });
   const { addToCart } = useCartActions();
   const user = useAuth((state) => state.user);
-  const isAdmin = isAdminRole(user?.role);
+  const router = useRouter();
+  const isAdmin = isShoppingRestrictedUser(user);
 
   // Review form state
   const [showReviewForm, setShowReviewForm] = useState(false);
@@ -54,8 +57,10 @@ export default function ProductDetailClient({
   const [isLikeLoading, setIsLikeLoading] = useState(false);
   const reviewFormRef = useRef<HTMLFormElement>(null);
 
-  // Sync authenticated state on mount
+  // Sync authenticated state on mount (customers only — guests and admins
+  // have no per-user like state, so skip the extra request).
   useEffect(() => {
+    if (!user || isShoppingRestrictedUser(user)) return;
     const refreshProduct = async () => {
       try {
         const res = await api.get(`/store/products/${initialProduct.id}/`);
@@ -65,16 +70,18 @@ export default function ProductDetailClient({
       }
     };
     refreshProduct();
-  }, [initialProduct.id]);
+  }, [initialProduct.id, user]);
 
-
+  /** Current location encoded for the login ?next= parameter. */
+  const getLoginRedirectUrl = () => {
+    const current = `${window.location.pathname}${window.location.search}`;
+    return `/login?next=${encodeURIComponent(current)}`;
+  };
 
   const handleAddToCart = async () => {
-    try {
-      await addToCart(product, quantity);
+    const ok = await addToCart(product, quantity);
+    if (ok) {
       toast.success('Added to cart!');
-    } catch (error) {
-      toast.error('Failed to add to cart');
     }
   };
 
@@ -144,9 +151,18 @@ export default function ProductDetailClient({
     }
   };
 
+  const handleWriteReviewClick = () => {
+    if (!user) {
+      toast.info('Please log in to write a review.');
+      router.push(getLoginRedirectUrl());
+      return;
+    }
+    setShowReviewForm(!showReviewForm);
+  };
+
   const handleSubmitReview = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (submittingReview) return;
+    if (!user || submittingReview) return;
     setSubmittingReview(true);
     try {
       const res = await api.post(`/store/products/${product.id}/reviews/`, {
@@ -184,7 +200,7 @@ export default function ProductDetailClient({
   };
 
   return (
-    <main className="flex-grow container mx-auto px-4 py-8 pb-24 md:pb-8">
+    <main className="flex-grow container mx-auto px-4 py-8">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
         {/* Product Images Gallery */}
         <div className="space-y-6">
@@ -199,7 +215,7 @@ export default function ProductDetailClient({
             } : {}}
           >
             <Image
-              src={product.images?.[selectedImage]?.image || 'https://picsum.photos/seed/product/600/600'}
+              src={optimizeImageUrl(product.images?.[selectedImage]?.image, 1200) || 'https://picsum.photos/seed/product/600/600'}
               alt={product.title}
               fill
               className="object-cover transition-all duration-300"
@@ -228,9 +244,10 @@ export default function ProductDetailClient({
                   )}
                 >
                   <Image
-                    src={img.image}
+                    src={optimizeImageUrl(img.image, 200)}
                     alt={`${product.title} thumbnail ${index + 1}`}
                     fill
+                    sizes="96px"
                     className="object-cover"
                   />
                   {selectedImage === index && (
@@ -278,83 +295,58 @@ export default function ProductDetailClient({
             )}
           </div>
 
-          {!isAdmin && (
-            <>
-              <div className="flex items-center gap-4">
-                <div className="flex items-center border rounded-lg">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                    disabled={quantity <= 1}
-                  >
-                    <Minus className="h-4 w-4" />
-                  </Button>
-                  <span className="px-4 py-2 font-bold">{quantity}</span>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setQuantity(quantity + 1)}
-                  >
-                    <Plus className="h-4 w-4" />
-                  </Button>
-                </div>
-                <Button onClick={handleAddToCart} className="flex-1 h-12">
-                  <ShoppingCart className="h-5 w-5 mr-2" />
-                  Add to Cart
+          {isAdmin ? (
+            <AdminShoppingNotice />
+          ) : (
+            <div className="flex flex-wrap items-center gap-3 sm:gap-4">
+              <div className="flex items-center border rounded-lg">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                  disabled={quantity <= 1}
+                >
+                  <Minus className="h-4 w-4" />
+                </Button>
+                <span className="px-4 py-2 font-bold">{quantity}</span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setQuantity(quantity + 1)}
+                >
+                  <Plus className="h-4 w-4" />
                 </Button>
               </div>
-
-              <div className="md:hidden fixed bottom-0 left-0 right-0 bg-background border-t p-4 z-50">
-                <div className="flex items-center gap-4">
-                  <div className="flex items-center border rounded-lg">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                      disabled={quantity <= 1}
-                    >
-                      <Minus className="h-4 w-4" />
-                    </Button>
-                    <span className="px-4 py-2 font-bold">{quantity}</span>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setQuantity(quantity + 1)}
-                    >
-                      <Plus className="h-4 w-4" />
-                    </Button>
-                  </div>
-                  <Button onClick={handleAddToCart} className="flex-1 h-12">
-                    <ShoppingCart className="h-5 w-5 mr-2" />
-                    Add to Cart - {formatEtb(effectivePrice * quantity)}
-                  </Button>
-                </div>
-              </div>
-            </>
+              <Button onClick={handleAddToCart} className="flex-1 min-w-[180px] h-12">
+                <ShoppingCart className="h-5 w-5 mr-2" />
+                Add to Cart
+              </Button>
+            </div>
           )}
 
           {/* Actions */}
           <div className="flex gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={handleLike}
-              disabled={isLikeLoading}
-              aria-pressed={!!product.is_liked}
-              aria-label={product.is_liked ? 'Remove from favorites' : 'Add to favorites'}
-              title="Tap to save or remove — there is no separate dislike action"
-              className={cn(
-                "transition-all active:scale-125 h-12 px-6", 
-                product.is_liked ? 'border-destructive/30 bg-destructive/5 text-destructive' : ''
-              )}
-            >
-              <Heart 
-                className={cn("h-5 w-5 mr-2 transition-transform", product.is_liked ? 'scale-110' : '')} 
-                fill={product.is_liked ? "currentColor" : "none"}
-              />
-              <span className="font-bold">{product.total_likes}</span>
-            </Button>
+            {!isAdmin && (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleLike}
+                disabled={isLikeLoading}
+                aria-pressed={!!product.is_liked}
+                aria-label={product.is_liked ? 'Remove from favorites' : 'Add to favorites'}
+                title="Tap to save or remove — there is no separate dislike action"
+                className={cn(
+                  "transition-all active:scale-125 h-12 px-6", 
+                  product.is_liked ? 'border-destructive/30 bg-destructive/5 text-destructive' : ''
+                )}
+              >
+                <Heart 
+                  className={cn("h-5 w-5 mr-2 transition-transform", product.is_liked ? 'scale-110' : '')} 
+                  fill={product.is_liked ? "currentColor" : "none"}
+                />
+                <span className="font-bold">{product.total_likes}</span>
+              </Button>
+            )}
             <Button variant="outline" onClick={handleShare}>
               <Share2 className="h-5 w-5 mr-2" />
               Share
@@ -399,12 +391,14 @@ export default function ProductDetailClient({
 
         <TabsContent value="reviews" className="mt-8">
           <div className="space-y-6">
-            <div className="flex justify-between items-center">
+            <div className="flex justify-between items-center gap-4">
               <h3 className="text-2xl font-bold">Customer Reviews</h3>
-              <Button onClick={() => setShowReviewForm(!showReviewForm)}>
-                <MessageSquare className="h-5 w-5 mr-2" />
-                Write Review
-              </Button>
+              {!isAdmin && (
+                <Button onClick={handleWriteReviewClick} className="shrink-0">
+                  <MessageSquare className="h-5 w-5 mr-2" />
+                  Write Review
+                </Button>
+              )}
             </div>
 
             {showReviewForm && (
