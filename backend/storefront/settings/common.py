@@ -32,6 +32,7 @@ environ.Env.read_env(os.path.join(BASE_DIR, ".env"))
 
 DOMAIN = env("DOMAIN", default="localhost:3000")
 SITE_NAME = "Nebi Store"
+FRONTEND_URL = env("FRONTEND_URL", default="http://localhost:3000")
 
 
 # =========================================================

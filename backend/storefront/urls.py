@@ -19,7 +19,7 @@ def serve_media_debug(request, path):
 
 admin.site.site_header = 'Ecommerce Admin'
 admin.site.index_title = 'admin'
-admin.site.site_url = 'http://localhost:3000'
+admin.site.site_url = f"{settings.FRONTEND_URL}/admin/dashboard"
 
 # Core API + app routes (safe in production).
 urlpatterns = [
