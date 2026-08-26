@@ -29,6 +29,7 @@ import {
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { api } from '@/lib/api-client';
+import { getDjangoAdminUrl } from '@/lib/api-helpers';
 
 import { useSyncExternalStore } from 'react';
 
@@ -82,9 +83,7 @@ export default function Navbar() {
   };
 
   // Helper for Django Admin URL
-  const backendAdminUrl = process.env.NEXT_PUBLIC_API_URL
-    ? process.env.NEXT_PUBLIC_API_URL.replace('/api/v1', '/admin/')
-    : '/admin/';
+  const backendAdminUrl = getDjangoAdminUrl();
 
   const handleLogout = () => {
     logout();

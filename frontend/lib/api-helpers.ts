@@ -10,6 +10,13 @@ export function extractList<T>(payload: T[] | PaginatedResponse<T>): T[] {
   return payload?.results ?? [];
 }
 
+export function getDjangoAdminUrl(): string {
+  const raw = process.env.NEXT_PUBLIC_API_URL || '';
+  if (!raw) return '/admin/';
+  const base = raw.replace(/\/api\/v1\/?$/, '').replace(/\/+$/, '');
+  return `${base}/admin/`;
+}
+
 export function getApiErrorMessage(error: unknown, fallback: string): string {
   const err = error as {
     response?: { data?: Record<string, unknown>; status?: number };
