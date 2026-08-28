@@ -205,7 +205,7 @@ export default function ProductDetailClient({
         {/* Product Images Gallery */}
         <div className="space-y-6">
           <div 
-            className="aspect-square relative overflow-hidden rounded-[2rem] bg-cream shadow-2xl cursor-zoom-in border border-white/20"
+            className="aspect-square relative overflow-hidden rounded-[2rem] bg-muted shadow-2xl cursor-zoom-in border border-white/20"
             onMouseMove={handleImageMouseMove}
             onClick={handleImageClick}
             style={isZoomed ? {

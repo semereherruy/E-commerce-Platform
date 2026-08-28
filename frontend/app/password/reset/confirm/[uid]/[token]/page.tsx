@@ -102,7 +102,7 @@ export default function PasswordResetConfirmPage({ params }: PageProps) {
             <form onSubmit={handleSubmit}>
               <CardContent className="space-y-4">
                 <div className="space-y-2 text-left">
-                  <Label htmlFor="new_password" className="font-bold uppercase text-[10px] tracking-widest text-primary ml-2">New Password</Label>
+                  <Label htmlFor="new_password" className="font-bold uppercase text-[10px] tracking-widest text-foreground ml-2">New Password</Label>
                   <Input 
                     id="new_password" 
                     type="password" 
@@ -114,7 +114,7 @@ export default function PasswordResetConfirmPage({ params }: PageProps) {
                   />
                 </div>
                 <div className="space-y-2 text-left">
-                  <Label htmlFor="re_new_password" className="font-bold uppercase text-[10px] tracking-widest text-primary ml-2">Confirm New Password</Label>
+                  <Label htmlFor="re_new_password" className="font-bold uppercase text-[10px] tracking-widest text-foreground ml-2">Confirm New Password</Label>
                   <Input 
                     id="re_new_password" 
                     type="password" 

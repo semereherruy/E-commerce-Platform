@@ -249,7 +249,7 @@ export default function ProfilePage() {
                     <form className="grid grid-cols-1 md:grid-cols-2 gap-8" onSubmit={handleSave}>
                       {/* Read-only user fields */}
                       <div className="space-y-3">
-                        <Label className="font-bold uppercase text-xs tracking-widest text-primary flex items-center gap-2">
+                        <Label className="font-bold uppercase text-xs tracking-widest text-foreground flex items-center gap-2">
                           <User className="h-3 w-3" /> First Name
                         </Label>
                         <Input
@@ -259,7 +259,7 @@ export default function ProfilePage() {
                         />
                       </div>
                       <div className="space-y-3">
-                        <Label className="font-bold uppercase text-xs tracking-widest text-primary flex items-center gap-2">
+                        <Label className="font-bold uppercase text-xs tracking-widest text-foreground flex items-center gap-2">
                           <User className="h-3 w-3" /> Last Name
                         </Label>
                         <Input
@@ -270,7 +270,7 @@ export default function ProfilePage() {
                       </div>
 
                       <div className="space-y-3 md:col-span-2">
-                        <Label className="font-bold uppercase text-xs tracking-widest text-primary flex items-center gap-2">
+                        <Label className="font-bold uppercase text-xs tracking-widest text-foreground flex items-center gap-2">
                           <Mail className="h-3 w-3" /> Email Address
                         </Label>
                         <Input
@@ -285,7 +285,7 @@ export default function ProfilePage() {
 
                       {/* Editable phone */}
                       <div className="space-y-3 md:col-span-2">
-                        <Label className="font-bold uppercase text-xs tracking-widest text-primary flex items-center gap-2">
+                        <Label className="font-bold uppercase text-xs tracking-widest text-foreground flex items-center gap-2">
                           <Phone className="h-3 w-3" /> Phone Number
                         </Label>
                         <Input
@@ -309,7 +309,7 @@ export default function ProfilePage() {
 
                       {/* Birth date */}
                       <div className="space-y-3 md:col-span-2">
-                        <Label className="font-bold uppercase text-xs tracking-widest text-primary flex items-center gap-2">
+                        <Label className="font-bold uppercase text-xs tracking-widest text-foreground flex items-center gap-2">
                           <Calendar className="h-3 w-3" /> Date of Birth
                         </Label>
                         <Input

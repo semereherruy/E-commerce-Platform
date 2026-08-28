@@ -65,7 +65,7 @@ export default function ForgotPasswordPage() {
             <form onSubmit={handleSubmit}>
               <CardContent className="space-y-4">
                 <div className="space-y-2 text-left">
-                  <Label htmlFor="email" className="font-bold uppercase text-xs tracking-widest text-primary ml-2">Email Address</Label>
+                  <Label htmlFor="email" className="font-bold uppercase text-xs tracking-widest text-foreground ml-2">Email Address</Label>
                   <Input 
                     id="email" 
                     type="email" 

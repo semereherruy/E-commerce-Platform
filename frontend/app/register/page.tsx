@@ -165,7 +165,7 @@ export default function RegisterPage() {
             <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-5">
               {/* First Name */}
               <div className="space-y-1">
-                <Label htmlFor="first_name" className="font-bold uppercase text-xs tracking-widest text-primary">
+                <Label htmlFor="first_name" className="font-bold uppercase text-xs tracking-widest text-foreground">
                   First Name <span className="text-red-500">*</span>
                 </Label>
                 <div className="relative">
@@ -181,7 +181,7 @@ export default function RegisterPage() {
 
               {/* Last Name */}
               <div className="space-y-1">
-                <Label htmlFor="last_name" className="font-bold uppercase text-xs tracking-widest text-primary">
+                <Label htmlFor="last_name" className="font-bold uppercase text-xs tracking-widest text-foreground">
                   Last Name <span className="text-red-500">*</span>
                 </Label>
                 <div className="relative">
@@ -197,7 +197,7 @@ export default function RegisterPage() {
 
               {/* Username */}
               <div className="space-y-1 md:col-span-2">
-                <Label htmlFor="username" className="font-bold uppercase text-xs tracking-widest text-primary">
+                <Label htmlFor="username" className="font-bold uppercase text-xs tracking-widest text-foreground">
                   Username <span className="text-red-500">*</span>
                 </Label>
                 <div className="relative">
@@ -213,7 +213,7 @@ export default function RegisterPage() {
 
               {/* Email */}
               <div className="space-y-1 md:col-span-2">
-                <Label htmlFor="email" className="font-bold uppercase text-xs tracking-widest text-primary">
+                <Label htmlFor="email" className="font-bold uppercase text-xs tracking-widest text-foreground">
                   Email Address <span className="text-red-500">*</span>
                 </Label>
                 <div className="relative">
@@ -230,7 +230,7 @@ export default function RegisterPage() {
 
               {/* Phone */}
               <div className="space-y-1 md:col-span-2">
-                <Label htmlFor="phone" className="font-bold uppercase text-xs tracking-widest text-primary">
+                <Label htmlFor="phone" className="font-bold uppercase text-xs tracking-widest text-foreground">
                   Phone Number <span className="text-muted-foreground font-normal normal-case">(optional)</span>
                 </Label>
                 <div className="relative">
@@ -250,7 +250,7 @@ export default function RegisterPage() {
 
               {/* Password */}
               <div className="space-y-1 md:col-span-2">
-                <Label htmlFor="password" className="font-bold uppercase text-xs tracking-widest text-primary">
+                <Label htmlFor="password" className="font-bold uppercase text-xs tracking-widest text-foreground">
                   Password <span className="text-red-500">*</span>
                 </Label>
                 <div className="relative">

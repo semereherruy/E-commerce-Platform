@@ -23,7 +23,7 @@ export default function AboutPage() {
             <div className="max-w-4xl">
               <h1 className="text-6xl md:text-8xl font-black tracking-tighter uppercase leading-[0.8] mb-8">
                 We Build <br />
-                <span className="text-white italic">The Standard</span> <br />
+                <span className="text-primary-foreground italic">The Standard</span> <br />
                 Of Urban Gear.
               </h1>
               <p className="text-xl md:text-2xl opacity-90 max-w-2xl font-medium leading-relaxed">
@@ -89,7 +89,7 @@ export default function AboutPage() {
         </section>
 
         {/* CTA */}
-        <section className="py-24 bg-cream/30">
+        <section className="py-24 bg-muted/40">
           <div className="container mx-auto px-4 text-center">
             <h2 className="text-5xl md:text-7xl font-black tracking-tighter uppercase mb-8">Ready to <span className="text-primary italic">Join us?</span></h2>
             <div className="flex flex-wrap justify-center gap-4">

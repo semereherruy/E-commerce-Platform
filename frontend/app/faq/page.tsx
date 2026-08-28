@@ -107,7 +107,7 @@ export default function FAQPage() {
       
       <main className="flex-grow">
         {/* Header Section */}
-        <section className="bg-cream/30 py-24">
+        <section className="bg-muted/40 py-24">
           <div className="container mx-auto px-4 text-center">
             <h1 className="text-5xl md:text-7xl font-black tracking-tighter uppercase mb-6">
               Frequently Asked <span className="text-primary italic">Questions</span>
@@ -135,7 +135,7 @@ export default function FAQPage() {
             {/* Quick Contacts */}
             <div className="md:col-span-1 space-y-6">
               <div className="p-8 bg-primary text-primary-foreground rounded-[40px] shadow-2xl">
-                <Mail className="h-10 w-10 mb-6 text-white" />
+                <Mail className="h-10 w-10 mb-6 text-primary-foreground" />
                 <h3 className="text-xl font-black uppercase tracking-tighter mb-2">Still need help?</h3>
                 <p className="text-sm opacity-90 font-medium mb-6 leading-tight">
                   Our team is available 24/7 to help you with any issues.

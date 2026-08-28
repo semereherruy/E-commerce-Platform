@@ -205,15 +205,15 @@ export default function CheckoutPage() {
                     
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-6">
                        <div className="space-y-3 md:col-span-2">
-                          <Label className="font-bold uppercase text-xs tracking-widest text-primary">Card Number</Label>
+                          <Label className="font-bold uppercase text-xs tracking-widest text-foreground">Card Number</Label>
                           <Input placeholder="0000 0000 0000 0000" className="h-14 border-2 rounded-2xl font-medium" />
                        </div>
                        <div className="space-y-3">
-                          <Label className="font-bold uppercase text-xs tracking-widest text-primary">Expiry Date</Label>
+                          <Label className="font-bold uppercase text-xs tracking-widest text-foreground">Expiry Date</Label>
                           <Input placeholder="MM/YY" className="h-14 border-2 rounded-2xl font-medium" />
                        </div>
                        <div className="space-y-3">
-                          <Label className="font-bold uppercase text-xs tracking-widest text-primary">CVV</Label>
+                          <Label className="font-bold uppercase text-xs tracking-widest text-foreground">CVV</Label>
                           <Input placeholder="***" className="h-14 border-2 rounded-2xl font-medium" />
                        </div>
                     </div>
@@ -277,7 +277,7 @@ export default function CheckoutPage() {
                     </CardContent>
                  </Card>
                  
-                 <div className="p-6 bg-cream/50 rounded-3xl border text-center space-y-2">
+                 <div className="p-6 bg-muted/40 rounded-3xl border text-center space-y-2">
                     <Truck className="h-6 w-6 text-primary mx-auto mb-2" />
                     <h4 className="font-black uppercase tracking-widest text-[10px] text-primary">Delivery Guarantee</h4>
                     <p className="text-[9px] font-bold text-muted-foreground uppercase leading-tight">Your order will be shipped within 24 hours of confirmation.</p>

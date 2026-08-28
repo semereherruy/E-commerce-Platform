@@ -18,7 +18,7 @@ export default function FeaturedProducts({
   const products = initialProducts;
 
   return (
-    <section className="py-24 bg-cream/30">
+    <section className="py-24 bg-muted/40">
       <div className="container mx-auto px-4">
         <div className="flex flex-col md:flex-row justify-between items-end mb-12 gap-6">
           <div className="max-w-2xl">

@@ -84,7 +84,7 @@ export default function ProductCard({ product }: ProductCardProps) {
         className="overflow-hidden h-full flex flex-col border-none shadow-lg bg-white/50 backdrop-blur-sm group cursor-pointer transition-all hover:shadow-xl hover:-translate-y-1"
         onClick={navigateToProduct}
       >
-        <div className="relative aspect-square overflow-hidden bg-cream">
+        <div className="relative aspect-square overflow-hidden bg-muted">
           {product.images?.[0] ? (
             <Image
               src={optimizeImageUrl(product.images[0].image, 600)}

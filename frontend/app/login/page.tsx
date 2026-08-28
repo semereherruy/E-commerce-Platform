@@ -147,7 +147,7 @@ export default function LoginPage() {
             <form onSubmit={handleSubmit} noValidate>
               <CardContent className="grid grid-cols-1 gap-5">
                 <div className="space-y-1">
-                  <Label htmlFor="email" className="font-bold uppercase text-xs tracking-widest text-primary">
+                  <Label htmlFor="email" className="font-bold uppercase text-xs tracking-widest text-foreground">
                     Email Address
                   </Label>
                   <div className="relative">
@@ -172,7 +172,7 @@ export default function LoginPage() {
 
                 <div className="space-y-1">
                   <div className="flex items-center justify-between">
-                    <Label htmlFor="password" className="font-bold uppercase text-xs tracking-widest text-primary">
+                    <Label htmlFor="password" className="font-bold uppercase text-xs tracking-widest text-foreground">
                       Password
                     </Label>
                     <Link href="/forgot-password" className="text-xs font-bold text-foreground/60 hover:text-primary hover:underline">

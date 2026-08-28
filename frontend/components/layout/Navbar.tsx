@@ -109,7 +109,7 @@ export default function Navbar() {
                 href="/admin/dashboard" 
                 className={cn(
                   "flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary/10 text-primary font-bold hover:bg-primary/20 transition-all",
-                  pathname.startsWith('/admin') && "bg-primary text-white"
+                  pathname.startsWith('/admin') && "bg-primary text-primary-foreground"
                 )}
               >
                 <LayoutDashboard className="h-4 w-4" />
@@ -161,7 +161,7 @@ export default function Navbar() {
                         variant="secondary"
                         size="sm"
                         onClick={() => setSearchQuery(p.title)}
-                        className="h-10 rounded-xl font-bold gap-2 hover:bg-primary hover:text-white transition-all shadow-sm active:scale-95"
+                        className="h-10 rounded-xl font-bold gap-2 hover:bg-primary hover:text-primary-foreground transition-all shadow-sm active:scale-95"
                       >
                         <Search className="h-4 w-4" />
                         {p.title}
@@ -351,7 +351,7 @@ export default function Navbar() {
                         onClick={() => setMobileOpen(false)}
                         className={cn(
                           'flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-black transition-colors bg-primary/5 text-primary ring-1 ring-primary/20',
-                          pathname.startsWith('/admin') && 'bg-primary text-white'
+                          pathname.startsWith('/admin') && 'bg-primary text-primary-foreground'
                         )}
                       >
                         <LayoutDashboard className="h-4 w-4 shrink-0" />

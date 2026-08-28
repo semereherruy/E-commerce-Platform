@@ -86,7 +86,7 @@ export default async function Home() {
         </div>
       </section>
 
-      <Suspense fallback={<div className="py-24 bg-cream/30 h-[400px] animate-pulse" />}>
+      <Suspense fallback={<div className="py-24 bg-muted/40 h-[400px] animate-pulse" />}>
         <FeaturedProducts products={featuredProducts} />
       </Suspense>
 
@@ -100,7 +100,7 @@ export default async function Home() {
 
       
       {/* Category Grid */}
-      <section className="py-24 bg-cream/20">
+      <section className="py-24 bg-muted/40">
          <div className="container mx-auto px-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 h-[600px]">
                {topCollections.length > 0 && (
