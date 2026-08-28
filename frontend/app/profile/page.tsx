@@ -10,7 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import {
-  User, Mail, Shield, LogOut, Package, Settings, CreditCard,
+  User, Mail, LogOut, Package, Settings, CreditCard,
   Trash2, AlertTriangle, Phone, Calendar, Crown
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
@@ -319,17 +319,6 @@ export default function ProfilePage() {
                           className="h-14 border-2 rounded-2xl font-medium"
                           max={new Date().toISOString().slice(0, 10)}
                         />
-                      </div>
-
-                      {/* Role */}
-                      <div className="space-y-3 md:col-span-2">
-                        <Label className="font-bold uppercase text-xs tracking-widest text-primary flex items-center gap-2">
-                          <Shield className="h-3 w-3" /> Account Role
-                        </Label>
-                        <div className="p-4 rounded-2xl bg-primary/5 border-2 border-primary/20 flex items-center gap-3">
-                          <Shield className="h-5 w-5 text-primary" />
-                          <span className="font-black uppercase tracking-widest text-sm">{user.role} Member</span>
-                        </div>
                       </div>
 
                       <div className="md:col-span-2 pt-6">

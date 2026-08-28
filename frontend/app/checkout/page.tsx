@@ -121,41 +121,41 @@ export default function CheckoutPage() {
 
                {/* Progress Indicator */}
                <div className="flex items-center gap-4">
-                  <div className={`h-10 w-10 rounded-full flex items-center justify-center font-black text-sm transition-all ${checkoutProgress >= 1 ? 'bg-primary text-white' : 'bg-muted'}`}>
+                  <div className={`h-10 w-10 rounded-full flex items-center justify-center font-black text-sm transition-all ${checkoutProgress >= 1 ? 'bg-foreground text-background' : 'bg-muted text-foreground/70'}`}>
                      1
                   </div>
-                  <div className={`flex-grow h-1 transition-all ${checkoutProgress >= 2 ? 'bg-primary' : 'bg-muted'}`} />
-                  <div className={`h-10 w-10 rounded-full flex items-center justify-center font-black text-sm transition-all ${checkoutProgress >= 2 ? 'bg-primary text-white' : 'bg-muted'}`}>
+                  <div className={`flex-grow h-1 transition-all ${checkoutProgress >= 2 ? 'bg-foreground' : 'bg-muted'}`} />
+                  <div className={`h-10 w-10 rounded-full flex items-center justify-center font-black text-sm transition-all ${checkoutProgress >= 2 ? 'bg-foreground text-background' : 'bg-muted text-foreground/70'}`}>
                      2
                   </div>
                </div>
 
                <form onSubmit={handleCheckout} className="space-y-12">
                   {/* Shipping Info */}
-                  <div className="space-y-8">
+                  <div className="space-y-8 p-10 bg-white rounded-[40px] shadow-xl border">
                     <div className="flex items-center gap-4">
-                       <div className="h-10 w-10 bg-primary/10 rounded-xl flex items-center justify-center text-primary font-black">1</div>
-                       <h2 className="text-3xl font-black uppercase tracking-tighter">Shipping Information</h2>
+                       <div className="h-10 w-10 bg-foreground/10 rounded-xl flex items-center justify-center text-foreground font-black">1</div>
+                       <h2 className="text-3xl font-black uppercase tracking-tighter text-card-foreground">Shipping Information</h2>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                        <div className="space-y-3">
-                          <Label className="font-bold uppercase text-xs tracking-widest text-primary">First Name</Label>
+                          <Label className="font-bold uppercase text-xs tracking-widest text-foreground">First Name</Label>
                           <Input required className="h-14 border-2 rounded-2xl font-medium" />
                        </div>
                        <div className="space-y-3">
-                          <Label className="font-bold uppercase text-xs tracking-widest text-primary">Last Name</Label>
+                          <Label className="font-bold uppercase text-xs tracking-widest text-foreground">Last Name</Label>
                           <Input required className="h-14 border-2 rounded-2xl font-medium" />
                        </div>
                        <div className="space-y-3 md:col-span-2">
-                          <Label className="font-bold uppercase text-xs tracking-widest text-primary">Address Line 1</Label>
+                          <Label className="font-bold uppercase text-xs tracking-widest text-foreground">Address Line 1</Label>
                           <Input required className="h-14 border-2 rounded-2xl font-medium" />
                        </div>
                        <div className="space-y-3">
-                          <Label className="font-bold uppercase text-xs tracking-widest text-primary">City</Label>
+                          <Label className="font-bold uppercase text-xs tracking-widest text-foreground">City</Label>
                           <Input required className="h-14 border-2 rounded-2xl font-medium" />
                        </div>
                        <div className="space-y-3">
-                          <Label className="font-bold uppercase text-xs tracking-widest text-primary">Postal Code</Label>
+                          <Label className="font-bold uppercase text-xs tracking-widest text-foreground">Postal Code</Label>
                           <Input required className="h-14 border-2 rounded-2xl font-medium" />
                        </div>
                     </div>

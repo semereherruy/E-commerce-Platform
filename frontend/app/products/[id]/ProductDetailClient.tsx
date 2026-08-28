@@ -446,20 +446,32 @@ export default function ProductDetailClient({
             )}
 
             <div className="space-y-4">
-              {reviews.map((review) => (
-                <div key={review.id} className="p-4 border rounded-lg">
-                  <div className="flex justify-between items-start mb-2">
-                    <div>
-                      <div className="font-bold">{review.name}</div>
-                      <StarRating rating={review.rating} />
-                    </div>
-                    <div className="text-sm text-muted-foreground">
-                      {new Date(review.date).toLocaleDateString()}
-                    </div>
+              {reviews.length === 0 ? (
+                <div className="flex flex-col items-center justify-center text-center p-10 border border-dashed rounded-xl bg-muted/30">
+                  <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center mb-3">
+                    <MessageSquare className="h-6 w-6 text-card-foreground/60" />
                   </div>
-                  <p>{review.description}</p>
+                  <h4 className="text-lg font-bold text-card-foreground">No reviews yet</h4>
+                  <p className="text-sm text-card-foreground/70 mt-1">
+                    Be the first to share your thoughts on this product.
+                  </p>
                 </div>
-              ))}
+              ) : (
+                reviews.map((review) => (
+                  <div key={review.id} className="p-4 border rounded-lg bg-white">
+                    <div className="flex justify-between items-start mb-2">
+                      <div>
+                        <div className="font-bold text-card-foreground">{review.name}</div>
+                        <StarRating rating={review.rating} />
+                      </div>
+                      <div className="text-sm text-card-foreground/70">
+                        {new Date(review.date).toLocaleDateString()}
+                      </div>
+                    </div>
+                    <p className="text-card-foreground/90">{review.description}</p>
+                  </div>
+                ))
+              )}
             </div>
           </div>
         </TabsContent>
