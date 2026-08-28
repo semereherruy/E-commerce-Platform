@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import { useAuth } from '@/lib/store';
@@ -11,19 +11,36 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import {
   User, Mail, LogOut, Package, Settings, CreditCard,
-  Trash2, AlertTriangle, Phone, Calendar, Crown
+  Trash2, AlertTriangle, Phone, Calendar, Crown, Percent
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { api } from '@/lib/api-client';
-import { getApiErrorMessage } from '@/lib/api-helpers';
-import { validatePhone } from '@/lib/validation';
+import { getApiErrorMessage, extractList } from '@/lib/api-helpers';
+import { validateName, validateEmail, validatePhone } from '@/lib/validation';
 import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Customer, MembershipPlan } from '@/lib/types';
 
-const MEMBERSHIP_LABELS: Record<string, { label: string; color: string }> = {
-  B: { label: 'Bronze', color: 'bg-amber-100 text-amber-800 border-amber-200' },
-  S: { label: 'Silver', color: 'bg-slate-100 text-slate-700 border-slate-300' },
-  G: { label: 'Gold', color: 'bg-yellow-100 text-yellow-800 border-yellow-300' },
+// Maps the Customer membership code (B/S/G) to the MembershipPlan level.
+const CODE_TO_LEVEL: Record<Customer['membership'], MembershipPlan['level']> = {
+  B: 'bronze',
+  S: 'silver',
+  G: 'gold',
+};
+
+// Styling only — plan names and benefits come from the membership API.
+const LEVEL_STYLE: Record<string, { color: string }> = {
+  bronze: { color: 'bg-amber-100 text-amber-800 border-amber-200' },
+  silver: { color: 'bg-slate-100 text-slate-700 border-slate-300' },
+  gold: { color: 'bg-yellow-100 text-yellow-800 border-yellow-300' },
+};
+
+// Fallback labels used only when membership plans are missing or unavailable.
+const CODE_FALLBACK_NAME: Record<string, string> = {
+  B: 'Bronze Member',
+  S: 'Silver Member',
+  G: 'Gold Member',
 };
 
 export default function ProfilePage() {
@@ -41,15 +58,81 @@ export default function ProfilePage() {
   const [customerData, setCustomerData] = useState({
     phone: '',
     birth_date: '',
-    membership: 'B',
+    membership: 'B' as Customer['membership'],
   });
+  const [isLoading, setIsLoading] = useState(true);
+  const [profileError, setProfileError] = useState<string | null>(null);
+  const [membershipPlan, setMembershipPlan] = useState<MembershipPlan | null>(null);
+  const [membershipStatus, setMembershipStatus] = useState<'loading' | 'ready' | 'missing' | 'error'>('loading');
   const [phoneError, setPhoneError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<{ first_name?: string; last_name?: string; email?: string }>({});
 
   // Delete account state
   const [deletePassword, setDeletePassword] = useState('');
   const [deleteConfirmText, setDeleteConfirmText] = useState('');
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+
+  // Loads the customer profile (/store/customers/me/) and membership plans
+  // (/store/memberships/) so the UI reflects real, persisted data.
+  const loadProfile = useCallback(async () => {
+    setIsLoading(true);
+    setProfileError(null);
+    const [customerResult, plansResult] = await Promise.allSettled([
+      api.get('/store/customers/me/'),
+      api.get('/store/memberships/'),
+    ]);
+
+    const membership: Customer['membership'] =
+      customerResult.status === 'fulfilled'
+        ? ((customerResult.value.data.membership || 'B') as Customer['membership'])
+        : 'B';
+
+    if (customerResult.status === 'fulfilled') {
+      const data = customerResult.value.data;
+      setCustomerData({
+        phone: data.phone || '',
+        birth_date: data.birth_date ? data.birth_date.toString().slice(0, 10) : '',
+        membership,
+      });
+      setFormData((prev) => ({
+        ...prev,
+        first_name: data.first_name ?? prev.first_name,
+        last_name: data.last_name ?? prev.last_name,
+        email: data.email ?? prev.email,
+      }));
+    } else {
+      setProfileError('Unable to load your profile. Please try again.');
+    }
+
+    if (plansResult.status === 'fulfilled') {
+      const plans = extractList<MembershipPlan>(plansResult.value.data);
+      const level = CODE_TO_LEVEL[membership];
+      const matched =
+        plans.find((p) => p.level === level && p.is_active) ??
+        plans.find((p) => p.level === level) ??
+        null;
+      setMembershipPlan(matched);
+      setMembershipStatus(matched ? 'ready' : 'missing');
+    } else {
+      setMembershipStatus('error');
+    }
+
+    setIsLoading(false);
+  }, []);
+
+  // Seed the form from the authenticated user as a baseline; loadProfile()
+  // overrides with authoritative API data when available.
+  useEffect(() => {
+    if (user) {
+      setFormData({
+        first_name: user.first_name || '',
+        last_name: user.last_name || '',
+        email: user.email || '',
+        username: user.username || '',
+      });
+    }
+  }, [user]);
 
   useEffect(() => {
     if (!user) {
@@ -60,47 +143,38 @@ export default function ProfilePage() {
       router.replace('/admin/dashboard');
       return;
     }
-    setFormData({
-      first_name: user.first_name || '',
-      last_name: user.last_name || '',
-      email: user.email || '',
-      username: user.username || '',
-    });
-    const fetchCustomer = async () => {
-      try {
-        const response = await api.get('/store/customers/me/');
-        setCustomerData({
-          phone: response.data.phone || '',
-          birth_date: response.data.birth_date
-            ? response.data.birth_date.toString().slice(0, 10)
-            : '',
-          membership: response.data.membership || 'B',
-        });
-      } catch {
-        // Keep defaults if profile unavailable
-      }
-    };
-    fetchCustomer();
-  }, [user, router]);
+    loadProfile();
+  }, [user, router, loadProfile]);
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
+    const nextErrors: { first_name?: string; last_name?: string; email?: string } = {};
+    const firstNameErr = validateName(formData.first_name);
+    const lastNameErr = validateName(formData.last_name);
+    const emailErr = validateEmail(formData.email);
     const phoneErr = validatePhone(customerData.phone);
-    if (phoneErr) {
-      setPhoneError(phoneErr);
-      return;
-    }
-    setPhoneError(null);
+    if (firstNameErr) nextErrors.first_name = firstNameErr;
+    if (lastNameErr) nextErrors.last_name = lastNameErr;
+    if (emailErr) nextErrors.email = emailErr;
+    setFieldErrors(nextErrors);
+    setPhoneError(phoneErr);
+    if (phoneErr || Object.keys(nextErrors).length > 0) return;
     setIsSaving(true);
     try {
-      const payload: { phone: string; birth_date?: string } = {
+      const payload = {
+        first_name: formData.first_name.trim(),
+        last_name: formData.last_name.trim(),
+        email: formData.email.trim().toLowerCase(),
         phone: customerData.phone,
+        ...(customerData.birth_date && { birth_date: customerData.birth_date }),
       };
-      if (customerData.birth_date) {
-        payload.birth_date = customerData.birth_date;
-      }
       await api.put('/store/customers/me/', payload);
-      setUser({ ...user!, first_name: formData.first_name, last_name: formData.last_name });
+      setUser({
+        ...user!,
+        first_name: payload.first_name,
+        last_name: payload.last_name,
+        email: payload.email,
+      });
       toast.success('Profile updated successfully.');
     } catch (error: unknown) {
       toast.error(getApiErrorMessage(error, 'Unable to save profile.'));
@@ -142,7 +216,14 @@ export default function ProfilePage() {
 
   if (!user) return null;
 
-  const mem = MEMBERSHIP_LABELS[customerData.membership] ?? MEMBERSHIP_LABELS.B;
+  const membershipLevel = CODE_TO_LEVEL[customerData.membership] ?? 'bronze';
+  const effectivePlan = membershipPlan ?? null;
+  const membershipName =
+    effectivePlan?.name ||
+    CODE_FALLBACK_NAME[customerData.membership] ||
+    'Bronze Member';
+  const membershipColor =
+    LEVEL_STYLE[effectivePlan?.level ?? membershipLevel]?.color ?? LEVEL_STYLE.bronze.color;
 
   const sidebarItems = [
     { key: 'account', label: 'Account Details', icon: User },
@@ -169,11 +250,53 @@ export default function ProfilePage() {
                   <p className="text-muted-foreground text-sm font-bold uppercase tracking-widest mt-1">
                     @{user.username}
                   </p>
-                  <Badge className={`mt-3 border font-bold uppercase text-xs tracking-widest ${mem.color}`}>
+                  <Badge className={`mt-3 border font-bold uppercase text-xs tracking-widest ${membershipColor}`}>
                     <Crown className="h-3 w-3 mr-1" />
-                    {mem.label} Member
+                    {membershipName}
                   </Badge>
                 </div>
+              </div>
+
+              {/* Membership details (from /store/memberships/) */}
+              <div className="bg-white rounded-[40px] shadow-sm border p-6 space-y-3">
+                <div className="flex items-center gap-2">
+                  <Crown className="h-4 w-4 text-primary" />
+                  <h3 className="font-black uppercase tracking-tighter text-sm">Membership</h3>
+                </div>
+                {membershipStatus === 'loading' ? (
+                  <div className="space-y-2">
+                    <Skeleton className="h-4 w-28" />
+                    <Skeleton className="h-3 w-full" />
+                    <Skeleton className="h-3 w-2/3" />
+                  </div>
+                ) : membershipStatus === 'ready' && effectivePlan ? (
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-sm font-bold">{effectivePlan.name}</span>
+                      <Badge className={`border ${membershipColor}`}>
+                        {effectivePlan.discount_percent > 0 ? (
+                          <>
+                            <Percent className="h-3 w-3 mr-1" />
+                            {effectivePlan.discount_percent}%
+                          </>
+                        ) : (
+                          'Member'
+                        )}
+                      </Badge>
+                    </div>
+                    {effectivePlan.perks_description && (
+                      <p className="text-sm text-muted-foreground font-medium leading-relaxed">
+                        {effectivePlan.perks_description}
+                      </p>
+                    )}
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground font-medium">
+                    {membershipStatus === 'error'
+                      ? 'Membership details are unavailable right now. Please try again later.'
+                      : `You're part of the ${membershipName}.`}
+                  </p>
+                )}
               </div>
 
               <div className="bg-white rounded-[40px] shadow-sm border p-4 space-y-1">
@@ -242,21 +365,48 @@ export default function ProfilePage() {
                   <CardHeader className="bg-primary/5 border-b p-10">
                     <CardTitle className="text-2xl font-black uppercase tracking-tighter">Personal Information</CardTitle>
                     <CardDescription className="text-md font-medium">
-                      Update your phone number, birth date, and more.
+                      Update your personal information — changes are saved to your account.
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="p-10">
+                    {profileError && (
+                      <div className="mb-6 flex items-center justify-between gap-4 bg-red-50 border border-red-200 rounded-2xl px-6 py-4">
+                        <div className="flex items-center gap-3">
+                          <AlertTriangle className="h-5 w-5 text-red-600" />
+                          <p className="text-sm font-semibold text-red-700">{profileError}</p>
+                        </div>
+                        <Button variant="outline" size="sm" onClick={loadProfile} disabled={isLoading}>
+                          Retry
+                        </Button>
+                      </div>
+                    )}
+                    {isLoading ? (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <Skeleton className="h-14 rounded-2xl" />
+                        <Skeleton className="h-14 rounded-2xl" />
+                        <Skeleton className="h-14 rounded-2xl md:col-span-2" />
+                        <Skeleton className="h-14 rounded-2xl md:col-span-2" />
+                        <Skeleton className="h-14 rounded-2xl md:col-span-2" />
+                        <Skeleton className="md:col-span-2 h-16 rounded-2xl" />
+                      </div>
+                    ) : (
                     <form className="grid grid-cols-1 md:grid-cols-2 gap-8" onSubmit={handleSave}>
-                      {/* Read-only user fields */}
+                      {/* Editable profile fields supported by CustomerMeUpdateSerializer */}
                       <div className="space-y-3">
                         <Label className="font-bold uppercase text-xs tracking-widest text-foreground flex items-center gap-2">
                           <User className="h-3 w-3" /> First Name
                         </Label>
                         <Input
                           value={formData.first_name}
-                          disabled
-                          className="h-14 border-2 rounded-2xl font-medium bg-muted"
+                          onChange={(e) => {
+                            setFormData({ ...formData, first_name: e.target.value });
+                            setFieldErrors((prev) => ({ ...prev, first_name: undefined }));
+                          }}
+                          className={`h-14 border-2 rounded-2xl font-medium ${fieldErrors.first_name ? 'border-red-400' : ''}`}
                         />
+                        {fieldErrors.first_name && (
+                          <p className="text-xs text-red-600 font-semibold ml-1">{fieldErrors.first_name}</p>
+                        )}
                       </div>
                       <div className="space-y-3">
                         <Label className="font-bold uppercase text-xs tracking-widest text-foreground flex items-center gap-2">
@@ -264,9 +414,15 @@ export default function ProfilePage() {
                         </Label>
                         <Input
                           value={formData.last_name}
-                          disabled
-                          className="h-14 border-2 rounded-2xl font-medium bg-muted"
+                          onChange={(e) => {
+                            setFormData({ ...formData, last_name: e.target.value });
+                            setFieldErrors((prev) => ({ ...prev, last_name: undefined }));
+                          }}
+                          className={`h-14 border-2 rounded-2xl font-medium ${fieldErrors.last_name ? 'border-red-400' : ''}`}
                         />
+                        {fieldErrors.last_name && (
+                          <p className="text-xs text-red-600 font-semibold ml-1">{fieldErrors.last_name}</p>
+                        )}
                       </div>
 
                       <div className="space-y-3 md:col-span-2">
@@ -274,12 +430,20 @@ export default function ProfilePage() {
                           <Mail className="h-3 w-3" /> Email Address
                         </Label>
                         <Input
-                          disabled
+                          type="email"
                           value={formData.email}
-                          className="h-14 border-2 rounded-2xl bg-muted font-medium"
+                          onChange={(e) => {
+                            setFormData({ ...formData, email: e.target.value });
+                            setFieldErrors((prev) => ({ ...prev, email: undefined }));
+                          }}
+                          placeholder={formData.email || 'you@example.com'}
+                          className={`h-14 border-2 rounded-2xl font-medium ${fieldErrors.email ? 'border-red-400' : ''}`}
                         />
+                        {fieldErrors.email && (
+                          <p className="text-xs text-red-600 font-semibold ml-1">{fieldErrors.email}</p>
+                        )}
                         <p className="text-[10px] text-muted-foreground font-bold italic ml-2">
-                          Email cannot be changed manually. Contact support for assistance.
+                          Your email is used to log in — you will use the new email the next time you sign in.
                         </p>
                       </div>
 
@@ -327,6 +491,7 @@ export default function ProfilePage() {
                         </Button>
                       </div>
                     </form>
+                    )}
                   </CardContent>
                 </Card>
               )}

@@ -24,15 +24,30 @@ export async function generateMetadata({ params }: PageProps) {
 
 export default async function ProductDetailPage({ params }: PageProps) {
   const { id } = await params;
-  const [productResult, reviewsResult, relatedResult] = await Promise.all([
+  const [productResult, reviewsResult] = await Promise.all([
     serverApiFetch<Product>(`/store/products/${id}/`, { single: true, revalidate: 300 }), // 5 min
     serverApiFetch<Review>(`/store/products/${id}/reviews/`, { revalidate: 600 }), // 10 min
-    serverApiFetch<Product>(`/store/products/?limit=4`, { revalidate: 600 }), // 10 min
   ]);
 
   const product = productResult.data as Product | null;
   const reviews = reviewsResult.error ? [] : (reviewsResult.data as Review[]);
-  const relatedProducts = relatedResult.error ? [] : (relatedResult.data as Product[]);
+
+  // Related products: find other products from the current product's collection,
+  // excluding the product itself, showing at most 4. Falls back to the generic
+  // list when the product has no collection.
+  let relatedProducts: Product[] = [];
+  if (product) {
+    const collectionId =
+      typeof product.collection === 'object' && product.collection
+        ? product.collection.id
+        : product.collection;
+    const relatedEndpoint = collectionId
+      ? `/store/products/?collection_id=${collectionId}&limit=5`
+      : `/store/products/?limit=4`;
+    const relatedResult = await serverApiFetch<Product>(relatedEndpoint, { revalidate: 600 }); // 10 min
+    const candidates = relatedResult.error ? [] : (relatedResult.data as Product[]);
+    relatedProducts = candidates.filter((p) => p.id !== product.id).slice(0, 4);
+  }
 
   if (productResult.error || !product) {
     return (

@@ -477,11 +477,23 @@ export default function ProductDetailClient({
         </TabsContent>
 
         <TabsContent value="related" className="mt-8">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-            {relatedProducts.map((relatedProduct) => (
-              <ProductCard key={relatedProduct.id} product={relatedProduct} />
-            ))}
-          </div>
+          {relatedProducts.length === 0 ? (
+            <div className="flex flex-col items-center justify-center text-center p-10 border border-dashed rounded-xl bg-muted/30">
+              <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center mb-3">
+                <ShoppingCart className="h-6 w-6 text-card-foreground/60" />
+              </div>
+              <h4 className="text-lg font-bold text-card-foreground">No related products</h4>
+              <p className="text-sm text-card-foreground/70 mt-1">
+                Check back soon — we add new items to this collection regularly.
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+              {relatedProducts.map((relatedProduct) => (
+                <ProductCard key={relatedProduct.id} product={relatedProduct} />
+              ))}
+            </div>
+          )}
         </TabsContent>
       </Tabs>
     </main>
